@@ -24,6 +24,7 @@ Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza 
 - Le pagine Home, Linee, Dettaglio, Avvisi e Gestionale sono realizzate in Flutter Web.
 - La schermata Linee legge i file GTFS JSON copiati da JiVaio e li trasforma in linee, direzioni, partenze e fermate.
 - Il gestionale permette di modificare ogni partenza come una corsa autonoma, con fermate e orari intermedi specifici; una corsa può iniziare da una fermata diversa dalle altre.
+- Ogni corsa può avere una nota facoltativa, visibile nel dettaglio della linea quando si seleziona quella partenza e inclusa nei backup.
 - Le linee circolari, come A e B, non richiedono andata e ritorno: il percorso si definisce per ciascuna partenza.
 - I vecchi dati locali restano leggibili: per le linee circolari, le sezioni Andata/Ritorno vengono unite in un solo circuito per calendario. Il percorso generico resta sulla prima partenza; le altre richiedono la verifica delle fermate e degli orari intermedi.
 - I dati iniziali sono una **anteprima storica incompleta**; non rappresentano l'elenco AMA aggiornato.

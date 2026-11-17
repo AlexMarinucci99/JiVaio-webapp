@@ -543,19 +543,38 @@ class _LineCard extends StatelessWidget {
   }
 }
 
-class LineDetailPage extends StatelessWidget {
+class LineDetailPage extends StatefulWidget {
   const LineDetailPage({required this.store, required this.lineId, super.key});
   final JivaioStore store;
   final String lineId;
 
   @override
+  State<LineDetailPage> createState() => _LineDetailPageState();
+}
+
+class _LineDetailPageState extends State<LineDetailPage> {
+  final _selectedTrips = ValueNotifier<Map<String, int>>({});
+
+  @override
+  void didUpdateWidget(LineDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.lineId != widget.lineId) _selectedTrips.value = {};
+  }
+
+  @override
+  void dispose() {
+    _selectedTrips.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PublicScaffold(
-      store: store,
+      store: widget.store,
       child: AnimatedBuilder(
-        animation: store,
+        animation: widget.store,
         builder: (context, _) {
-          final line = store.lineById(lineId);
+          final line = widget.store.lineById(widget.lineId);
           if (line == null) {
             return PageFrame(
               child: _EmptyState(
@@ -571,85 +590,89 @@ class LineDetailPage extends StatelessWidget {
           final initial = directions.indexWhere(
             (d) => d.id == requestedDirection,
           );
-          return PageFrame(
-            width: 1040,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextButton.icon(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Torna alle linee'),
-                ),
-                const SizedBox(height: 12),
-                const PreviewNotice(),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Container(
-                      width: 68,
-                      height: 68,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: JivaioColors.blue,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        line.code,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 21,
-                          fontWeight: FontWeight.w800,
+          return DefaultTabController(
+            length: directions.length,
+            initialIndex: initial < 0 ? 0 : initial,
+            child: PageFrame(
+              width: 1040,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Torna alle linee'),
+                  ),
+                  const SizedBox(height: 12),
+                  const PreviewNotice(),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Container(
+                        width: 68,
+                        height: 68,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: JivaioColors.blue,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          line.code,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            line.name,
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          Text(
-                            line.isCircular
-                                ? 'Linea ${line.code} · circolare · ${line.stopCount} fermate'
-                                : 'Linea ${line.code} · ${line.stopCount} fermate',
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              line.name,
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            Text(
+                              line.isCircular
+                                  ? 'Linea ${line.code} · circolare · ${line.stopCount} fermate'
+                                  : 'Linea ${line.code} · ${line.stopCount} fermate',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            _SelectedTripNote(
+                              directions: directions,
+                              selectedTrips: _selectedTrips,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => store.toggleFavorite(line.id),
-                      tooltip: 'Salva linea',
-                      icon: Icon(
-                        store.isFavorite(line.id)
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color: JivaioColors.danger,
-                        size: 28,
+                      IconButton(
+                        onPressed: () => widget.store.toggleFavorite(line.id),
+                        tooltip: 'Salva linea',
+                        icon: Icon(
+                          widget.store.isFavorite(line.id)
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: JivaioColors.danger,
+                          size: 28,
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  if (line.dataWarning != null) ...[
+                    _PublicDataWarning(text: line.dataWarning!),
+                    const SizedBox(height: 16),
                   ],
-                ),
-                const SizedBox(height: 24),
-                if (line.dataWarning != null) ...[
-                  _PublicDataWarning(text: line.dataWarning!),
-                  const SizedBox(height: 16),
-                ],
-                if (directions.isEmpty)
-                  const _EmptyState(
-                    title: 'Orari non disponibili',
-                    subtitle: 'Gli orari della linea sono in aggiornamento.',
-                    icon: Icons.schedule_outlined,
-                  )
-                else
-                  DefaultTabController(
-                    length: directions.length,
-                    initialIndex: initial < 0 ? 0 : initial,
-                    child: Builder(
+                  if (directions.isEmpty)
+                    const _EmptyState(
+                      title: 'Orari non disponibili',
+                      subtitle: 'Gli orari della linea sono in aggiornamento.',
+                      icon: Icons.schedule_outlined,
+                    )
+                  else
+                    Builder(
                       builder: (context) {
                         final tabs = [
                           for (var i = 0; i < directions.length; i++)
@@ -680,6 +703,16 @@ class LineDetailPage extends StatelessWidget {
                                         direction: direction,
                                         line: line,
                                         isCircular: line.isCircular,
+                                        initialTripIndex:
+                                            _selectedTrips.value[direction
+                                                .id] ??
+                                            0,
+                                        onTripSelected: (index) {
+                                          _selectedTrips.value = {
+                                            ..._selectedTrips.value,
+                                            direction.id: index,
+                                          };
+                                        },
                                       ),
                                     )
                                     .toList(),
@@ -689,12 +722,46 @@ class LineDetailPage extends StatelessWidget {
                         );
                       },
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class _SelectedTripNote extends StatelessWidget {
+  const _SelectedTripNote({
+    required this.directions,
+    required this.selectedTrips,
+  });
+
+  final List<TransitDirection> directions;
+  final ValueNotifier<Map<String, int>> selectedTrips;
+
+  @override
+  Widget build(BuildContext context) {
+    final tabs = DefaultTabController.of(context);
+    return AnimatedBuilder(
+      animation: Listenable.merge([tabs, selectedTrips]),
+      builder: (context, _) {
+        if (directions.isEmpty) return const SizedBox.shrink();
+        final direction =
+            directions[tabs.index.clamp(0, directions.length - 1)];
+        if (direction.trips.isEmpty) return const SizedBox.shrink();
+        final index = (selectedTrips.value[direction.id] ?? 0).clamp(
+          0,
+          direction.trips.length - 1,
+        );
+        final note = direction.trips[index].note.trim();
+        if (note.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(note, style: Theme.of(context).textTheme.bodyMedium),
+        );
+      },
     );
   }
 }
@@ -704,18 +771,28 @@ class _DirectionDetail extends StatefulWidget {
     required this.direction,
     required this.line,
     required this.isCircular,
+    required this.initialTripIndex,
+    required this.onTripSelected,
     super.key,
   });
   final TransitDirection direction;
   final TransitLine line;
   final bool isCircular;
+  final int initialTripIndex;
+  final ValueChanged<int> onTripSelected;
 
   @override
   State<_DirectionDetail> createState() => _DirectionDetailState();
 }
 
 class _DirectionDetailState extends State<_DirectionDetail> {
-  int _selectedTripIndex = 0;
+  late int _selectedTripIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTripIndex = widget.initialTripIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -771,8 +848,10 @@ class _DirectionDetailState extends State<_DirectionDetail> {
                                   ),
                                 ),
                                 selected: i == _selectedTripIndex,
-                                onSelected: (_) =>
-                                    setState(() => _selectedTripIndex = i),
+                                onSelected: (_) {
+                                  setState(() => _selectedTripIndex = i);
+                                  widget.onTripSelected(i);
+                                },
                               ),
                           ],
                   ),

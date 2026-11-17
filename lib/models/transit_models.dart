@@ -29,17 +29,20 @@ class TransitTrip {
     required this.departureTime,
     required this.stops,
     this.headsign = '',
+    this.note = '',
   });
 
   final String id;
   final String departureTime;
   final String headsign;
+  final String note;
   final List<TransitStopTime> stops;
 
   Map<String, Object?> toJson() => {
     'id': id,
     'departureTime': departureTime,
     'headsign': headsign,
+    'note': note,
     'stops': stops.map((stop) => stop.toJson()).toList(),
   };
 
@@ -47,6 +50,7 @@ class TransitTrip {
     id: json['id'] as String? ?? '',
     departureTime: json['departureTime'] as String? ?? '',
     headsign: json['headsign'] as String? ?? '',
+    note: json['note'] as String? ?? '',
     stops: (json['stops'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
         .map(TransitStopTime.fromJson)
@@ -217,6 +221,7 @@ List<TransitDirection> mergeCircularDirections(
           id: tripId,
           departureTime: trip.departureTime,
           headsign: trip.headsign,
+          note: trip.note,
           stops: trip.stops,
         );
       }

@@ -1181,32 +1181,38 @@ class _TripFields {
     required String departureTime,
     required String headsign,
     required List<TransitStopTime> stops,
+    String note = '',
   }) : departureTime = TextEditingController(text: departureTime),
        headsign = TextEditingController(text: headsign),
+       note = TextEditingController(text: note),
        stops = [...stops];
 
   factory _TripFields.fromTrip(TransitTrip trip) => _TripFields(
     id: trip.id,
     departureTime: trip.departureTime,
     headsign: trip.headsign,
+    note: trip.note,
     stops: trip.stops,
   );
 
   final String id;
   final TextEditingController departureTime;
   final TextEditingController headsign;
+  final TextEditingController note;
   List<TransitStopTime> stops;
 
   TransitTrip toTransitTrip() => TransitTrip(
     id: id,
     departureTime: _normalizeTime(departureTime.text),
     headsign: headsign.text.trim(),
+    note: note.text.trim(),
     stops: stops,
   );
 
   void dispose() {
     departureTime.dispose();
     headsign.dispose();
+    note.dispose();
   }
 }
 
@@ -1371,6 +1377,17 @@ class _TripAdminRow extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: trip.note,
+            minLines: 1,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Nota per questa corsa (facoltativa)',
+              hintText: 'Es. Corsa scolastica',
+              prefixIcon: Icon(Icons.notes_outlined),
+            ),
+          ),
           const SizedBox(height: 7),
           OutlinedButton.icon(
             onPressed: onEditStops,
