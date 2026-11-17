@@ -407,7 +407,7 @@ class _LineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final line = pair.line;
     final direction = pair.direction;
-    final directionIndex = line.directions.indexOf(direction);
+    final directionIndex = _publicDirections(line).indexOf(direction);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -567,7 +567,8 @@ class LineDetailPage extends StatelessWidget {
           }
           final requestedDirection =
               ModalRoute.of(context)?.settings.arguments as String?;
-          final initial = line.directions.indexWhere(
+          final directions = _publicDirections(line);
+          final initial = directions.indexWhere(
             (d) => d.id == requestedDirection,
           );
           return PageFrame(
@@ -638,50 +639,57 @@ class LineDetailPage extends StatelessWidget {
                   _PublicDataWarning(text: line.dataWarning!),
                   const SizedBox(height: 16),
                 ],
-                DefaultTabController(
-                  length: line.directions.length,
-                  initialIndex: initial < 0 ? 0 : initial,
-                  child: Builder(
-                    builder: (context) {
-                      final tabs = [
-                        for (var i = 0; i < line.directions.length; i++)
-                          Tab(
-                            text: line.isCircular
-                                ? _directionServiceTitle(
-                                    line,
-                                    line.directions[i],
-                                    i,
-                                  )
-                                : (line.directions[i].serviceLabel.isEmpty
-                                      ? '${line.directions[i].originName} → ${line.directions[i].destinationName}'
-                                      : '${line.directions[i].originName} → ${line.directions[i].destinationName}\n${line.directions[i].serviceLabel}'),
-                          ),
-                      ];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TabBar(isScrollable: true, tabs: tabs),
-                          const SizedBox(height: 18),
-                          SizedBox(
-                            height: 680,
-                            child: TabBarView(
-                              children: line.directions
-                                  .map(
-                                    (direction) => _DirectionDetail(
-                                      key: ValueKey(direction.id),
-                                      direction: direction,
-                                      line: line,
-                                      isCircular: line.isCircular,
-                                    ),
-                                  )
-                                  .toList(),
+                if (directions.isEmpty)
+                  const _EmptyState(
+                    title: 'Orari non disponibili',
+                    subtitle: 'Gli orari della linea sono in aggiornamento.',
+                    icon: Icons.schedule_outlined,
+                  )
+                else
+                  DefaultTabController(
+                    length: directions.length,
+                    initialIndex: initial < 0 ? 0 : initial,
+                    child: Builder(
+                      builder: (context) {
+                        final tabs = [
+                          for (var i = 0; i < directions.length; i++)
+                            Tab(
+                              text: line.isCircular
+                                  ? _directionServiceTitle(
+                                      line,
+                                      directions[i],
+                                      i,
+                                    )
+                                  : (directions[i].serviceLabel.isEmpty
+                                        ? '${directions[i].originName} → ${directions[i].destinationName}'
+                                        : '${directions[i].originName} → ${directions[i].destinationName}\n${directions[i].serviceLabel}'),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                        ];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TabBar(isScrollable: true, tabs: tabs),
+                            const SizedBox(height: 18),
+                            SizedBox(
+                              height: 680,
+                              child: TabBarView(
+                                children: directions
+                                    .map(
+                                      (direction) => _DirectionDetail(
+                                        key: ValueKey(direction.id),
+                                        direction: direction,
+                                        line: line,
+                                        isCircular: line.isCircular,
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
               ],
             ),
           );
@@ -1367,7 +1375,7 @@ List<_LineDirectionPair> _directionPairs(List<TransitLine> lines) => [
 
 List<_LineDirectionPair> _uniqueDirectionPairs(TransitLine line) {
   if (line.isCircular) {
-    return line.directions
+    return _publicDirections(line)
         .map((direction) => _LineDirectionPair(line, direction))
         .toList();
   }
@@ -1381,12 +1389,21 @@ List<_LineDirectionPair> _uniqueDirectionPairs(TransitLine line) {
   ];
 }
 
+List<TransitDirection> _publicDirections(TransitLine line) {
+  if (line.code.trim().toUpperCase() != 'B') return line.directions;
+  return line.directions.where((direction) {
+    final serviceId = direction.serviceId.trim();
+    final label = direction.serviceLabel.trim().toLowerCase();
+    return serviceId.isNotEmpty && label != 'orari generali';
+  }).toList();
+}
+
 String _directionServiceTitle(
   TransitLine line,
   TransitDirection direction,
   int directionIndex,
 ) {
-  final sameCalendar = line.directions
+  final sameCalendar = _publicDirections(line)
       .asMap()
       .entries
       .where((entry) => entry.value.serviceId == direction.serviceId)
