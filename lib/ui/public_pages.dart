@@ -759,7 +759,13 @@ class _SelectedTripNote extends StatelessWidget {
         if (note.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(top: 6),
-          child: Text(note, style: Theme.of(context).textTheme.bodyMedium),
+          child: Text(
+            note,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: JivaioColors.blue,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         );
       },
     );
@@ -894,7 +900,7 @@ class _DirectionDetailState extends State<_DirectionDetail> {
                     stop: stops[i],
                     first: i == 0,
                     last: i == stops.length - 1,
-                    timeLabel: _estimatedStopLabel(
+                    timeLabel: _stopTimeLabel(
                       widget.line,
                       direction,
                       selectedTrip,
@@ -1406,6 +1412,15 @@ bool _isLineAWeekday(TransitLine line, TransitDirection direction) =>
     line.code.trim().toUpperCase() == 'A' &&
     (direction.serviceId == '1' || direction.serviceId.isEmpty);
 
+String _serviceTimeLabel(TransitDirection direction, String time) {
+  if (direction.serviceId != 'NIGHT_THSAT') return time;
+  final match = RegExp(r'^(\d{1,2}):([0-5]\d)$').firstMatch(time.trim());
+  if (match == null) return time;
+  final hour = int.parse(match.group(1)!);
+  if (hour < 24 || hour > 47) return time;
+  return '${(hour - 24).toString().padLeft(2, '0')}:${match.group(2)}';
+}
+
 String _departureLabel(
   TransitLine line,
   TransitDirection direction,
@@ -1414,7 +1429,7 @@ String _departureLabel(
     _isLineAWeekday(line, direction) &&
         (time.trim() == '06:30' || time.trim() == '6:30')
     ? '$time (6S)'
-    : time;
+    : _serviceTimeLabel(direction, time);
 
 bool _isSchoolTrip(TransitTrip trip) =>
     trip.headsign.trim().toLowerCase().startsWith('corsa scolastica');
@@ -1432,20 +1447,20 @@ bool _hideLineAReviewWarning(TransitLine line, String warning) =>
     line.code.trim().toUpperCase() == 'A' &&
     warning.contains('La corsa delle 06:30 ha un orario stimato:');
 
-String? _estimatedStopLabel(
+String _stopTimeLabel(
   TransitLine line,
   TransitDirection direction,
   TransitTrip? trip,
   TransitStopTime stop,
 ) {
-  if (_isLineAWeekday(line, direction) &&
+  final isLineAEstimate =
+      _isLineAWeekday(line, direction) &&
       (trip?.departureTime == '06:30' || trip?.departureTime == '6:30') &&
       (direction.dataWarning?.contains('S.S. 80 alle 06:47') ?? false) &&
       stop.name.toUpperCase().replaceAll(' ', '').contains('S.S.80') &&
-      stop.time == '06:47') {
-    return '06:47 (stimato)';
-  }
-  return null;
+      stop.time == '06:47';
+  final time = _serviceTimeLabel(direction, stop.time);
+  return stop.isEstimated || isLineAEstimate ? '$time (stimato)' : time;
 }
 
 List<_LineDirectionPair> _directionPairs(List<TransitLine> lines) => [

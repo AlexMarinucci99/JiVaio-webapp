@@ -243,7 +243,7 @@ class GtfsRepository {
     if (days.join(',') == 'lun,mar,mer,gio,ven') return 'Feriale (lun–ven)';
     if (days.join(',') == 'sab') return 'Sabato';
     if (days.join(',') == 'dom') return 'Festivo';
-    if (days.join(',') == 'gio,sab') return 'Notturno (gio–sab)';
+    if (days.join(',') == 'gio,sab') return 'Notturno (gio e sab)';
     return days.isEmpty ? transitServiceLabel(serviceId) : days.join(' · ');
   }
 

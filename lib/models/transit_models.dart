@@ -3,16 +3,19 @@ class TransitStopTime {
     required this.stopId,
     required this.name,
     required this.time,
+    this.isEstimated = false,
   });
 
   final String stopId;
   final String name;
   final String time;
+  final bool isEstimated;
 
   Map<String, Object?> toJson() => {
     'stopId': stopId,
     'name': name,
     'time': time,
+    'isEstimated': isEstimated,
   };
 
   factory TransitStopTime.fromJson(Map<String, dynamic> json) =>
@@ -20,6 +23,7 @@ class TransitStopTime {
         stopId: json['stopId'] as String? ?? '',
         name: json['name'] as String? ?? '',
         time: json['time'] as String? ?? '',
+        isEstimated: json['isEstimated'] as bool? ?? false,
       );
 }
 
@@ -358,7 +362,7 @@ String transitServiceLabel(String serviceId) => switch (serviceId) {
   '1' => 'Feriale (lun–ven)',
   '2' => 'Sabato',
   'FESTIVO' => 'Festivo',
-  'NIGHT_THSAT' => 'Notturno (gio–sab)',
+  'NIGHT_THSAT' => 'Notturno (gio e sab)',
   '' => 'Orari generali',
   _ => 'Calendario $serviceId',
 };

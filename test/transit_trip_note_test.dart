@@ -2,6 +2,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:master_lines/models/transit_models.dart';
 
 void main() {
+  test('gli orari stimati restano distinguibili dopo un backup', () {
+    const stop = TransitStopTime(
+      stopId: 'stop-1',
+      name: 'Via Strinella',
+      time: '24:43',
+      isEstimated: true,
+    );
+    final restored = TransitStopTime.fromJson(stop.toJson());
+    expect(restored.isEstimated, isTrue);
+    expect(restored.time, '24:43');
+  });
+
+  test('i backup senza indicazione di stima restano compatibili', () {
+    final stop = TransitStopTime.fromJson({
+      'stopId': 'stop-2',
+      'name': 'Terminalbus',
+      'time': '24:45',
+    });
+    expect(stop.isEstimated, isFalse);
+  });
+
   test('una nota di corsa sopravvive al salvataggio e al caricamento', () {
     const trip = TransitTrip(
       id: 'trip-1',

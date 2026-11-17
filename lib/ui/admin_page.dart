@@ -1227,7 +1227,7 @@ const _serviceOptions = [
   ('1', 'Feriale (lun–ven)'),
   ('2', 'Sabato'),
   ('FESTIVO', 'Festivo'),
-  ('NIGHT_THSAT', 'Notturno (gio–sab)'),
+  ('NIGHT_THSAT', 'Notturno (gio e sab)'),
 ];
 
 class _DirectionForm extends StatelessWidget {
@@ -1486,7 +1486,8 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
     _stops = TextEditingController(
       text: widget.stops
           .map(
-            (stop) => '${stop.name} | ${stop.time == '--:--' ? '' : stop.time}',
+            (stop) =>
+                '${stop.name} | ${stop.time == '--:--' ? '' : '${stop.isEstimated ? '~' : ''}${stop.time}'}',
           )
           .join('\n'),
     );
@@ -1508,7 +1509,9 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
       final parts = value.split('|');
       final name = parts.first.trim();
       if (name.isEmpty) continue;
-      final enteredTime = parts.length > 1 ? parts[1].trim() : '';
+      final rawTime = parts.length > 1 ? parts[1].trim() : '';
+      final isEstimated = rawTime.startsWith('~');
+      final enteredTime = isEstimated ? rawTime.substring(1).trim() : rawTime;
       final time = enteredTime.isEmpty
           ? (parsedStops.isEmpty && widget.departureTime.trim().isNotEmpty
                 ? _normalizeTime(widget.departureTime)
@@ -1519,6 +1522,7 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
           stopId: 'manual-${name.toLowerCase().hashCode}',
           name: name,
           time: time,
+          isEstimated: isEstimated && time != '--:--',
         ),
       );
     }
@@ -1581,7 +1585,7 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Formato: Nome fermata | HH:MM, una fermata per riga. Se lasci vuoto l’orario della prima fermata useremo quello di partenza.',
+              'Formato: Nome fermata | HH:MM, una fermata per riga. Usa ~ prima dell’orario se è stimato. Se lasci vuoto l’orario della prima fermata useremo quello di partenza.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -1615,17 +1619,23 @@ class _StopTimeFields {
   _StopTimeFields(String line)
     : original = line,
       name = line.split('|').first.trim(),
+      isEstimated =
+          line.contains('|') && line.split('|')[1].trim().startsWith('~'),
       time = TextEditingController(
         text: line.contains('|')
             ? (line.split('|')[1].trim() == '--:--'
                   ? ''
-                  : line.split('|')[1].trim())
+                  : line
+                        .split('|')[1]
+                        .trim()
+                        .replaceFirst(RegExp(r'^~\s*'), ''))
             : '',
       );
 
   final String original;
   final String name;
   final TextEditingController time;
+  bool isEstimated;
 }
 
 class _StopTimesEditor extends StatefulWidget {
@@ -1660,7 +1670,7 @@ class _StopTimesEditorState extends State<_StopTimesEditor> {
         .map((row) {
           if (row.original.trim().isEmpty) return row.original;
           final time = row.time.text.trim();
-          return '${row.name} | ${time.isEmpty ? '' : _normalizeTime(time)}';
+          return '${row.name} | ${time.isEmpty ? '' : '${row.isEstimated ? '~' : ''}${_normalizeTime(time)}'}';
         })
         .join('\n');
     Navigator.pop(context, text);
@@ -1701,6 +1711,14 @@ class _StopTimesEditorState extends State<_StopTimesEditor> {
                         ),
                         const SizedBox(height: 8),
                         _TimeInput(controller: row.time, label: 'Orario'),
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Orario stimato'),
+                          value: row.isEstimated,
+                          onChanged: (value) =>
+                              setState(() => row.isEstimated = value ?? false),
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
                       ],
                     ),
                   ),
@@ -1770,7 +1788,7 @@ String? _validateStopRows(String? value) {
       return 'Indica il nome della fermata alla riga ${i + 1}';
     }
     if (parts.length > 1) {
-      final time = parts[1].trim();
+      final time = parts[1].trim().replaceFirst(RegExp(r'^~\s*'), '');
       if (time.isNotEmpty &&
           time != '--:--' &&
           _validateOptionalTime(time) != null) {
