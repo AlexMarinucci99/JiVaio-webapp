@@ -756,10 +756,10 @@ class _DirectionDetailState extends State<_DirectionDetail> {
                             for (var i = 0; i < trips.length; i++)
                               ChoiceChip(
                                 label: Text(
-                                  _departureLabel(
+                                  _tripDepartureLabel(
                                     widget.line,
                                     direction,
-                                    trips[i].departureTime,
+                                    trips[i],
                                   ),
                                 ),
                                 selected: i == _selectedTripIndex,
@@ -776,9 +776,16 @@ class _DirectionDetailState extends State<_DirectionDetail> {
         Text(
           selectedTrip == null || selectedTrip.departureTime.isEmpty
               ? 'Percorso e orari di una corsa'
-              : 'Corsa delle ${_departureLabel(widget.line, direction, selectedTrip.departureTime)}',
+              : 'Corsa delle ${_tripDepartureLabel(widget.line, direction, selectedTrip)}',
           style: Theme.of(context).textTheme.titleLarge,
         ),
+        if (selectedTrip != null && _isSchoolTrip(selectedTrip)) ...[
+          const SizedBox(height: 6),
+          Text(
+            selectedTrip.headsign,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
         const SizedBox(height: 12),
         if (direction.dataWarning != null &&
             !_hideLineAReviewWarning(widget.line, direction.dataWarning!)) ...[
@@ -1321,6 +1328,18 @@ String _departureLabel(
         (time.trim() == '06:30' || time.trim() == '6:30')
     ? '$time (6S)'
     : time;
+
+bool _isSchoolTrip(TransitTrip trip) =>
+    trip.headsign.trim().toLowerCase().startsWith('corsa scolastica');
+
+String _tripDepartureLabel(
+  TransitLine line,
+  TransitDirection direction,
+  TransitTrip trip,
+) {
+  final time = _departureLabel(line, direction, trip.departureTime);
+  return _isSchoolTrip(trip) ? '$time (scolastica)' : time;
+}
 
 bool _hideLineAReviewWarning(TransitLine line, String warning) =>
     line.code.trim().toUpperCase() == 'A' &&
