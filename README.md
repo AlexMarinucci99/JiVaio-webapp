@@ -23,6 +23,9 @@ Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza 
 
 - Le pagine Home, Linee, Dettaglio, Avvisi e Gestionale sono realizzate in Flutter Web.
 - La schermata Linee legge i file GTFS JSON copiati da JiVaio e li trasforma in linee, direzioni, partenze e fermate.
+- Il gestionale permette di modificare ogni partenza come una corsa autonoma, con fermate e orari intermedi specifici; una corsa può iniziare da una fermata diversa dalle altre.
+- Le linee circolari, come A e B, non richiedono andata e ritorno: il percorso si definisce per ciascuna partenza.
+- I vecchi dati locali con una lista di partenze e un percorso generico restano leggibili: il percorso viene associato alle partenze esistenti per poterle aggiornare singolarmente.
 - I dati iniziali sono una **anteprima storica incompleta**; non rappresentano l'elenco AMA aggiornato.
 - `/admin` è separato dalla navigazione pubblica e richiede un account Supabase presente in `admin_users`; senza configurazione Supabase mostra solo la schermata di configurazione.
 - Le modifiche del gestionale restano ancora nel `localStorage` del browser corrente: Auth e autorizzazione sono predisposte, ma i dati non sono ancora sincronizzati con il database condiviso.
