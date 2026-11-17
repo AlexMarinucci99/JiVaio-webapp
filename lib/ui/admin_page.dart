@@ -96,21 +96,14 @@ class _AdminPageState extends State<AdminPage> {
               const SizedBox(height: 18),
               if (_tab == 0) _linesPanel(context) else _alertsPanel(context),
               const SizedBox(height: 26),
-              Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: () =>
-                        Navigator.of(context).pushReplacementNamed('/lines'),
-                    icon: const Icon(Icons.open_in_new),
-                    label: const Text('Apri anteprima pubblica'),
-                  ),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: _resetPreview,
-                    icon: const Icon(Icons.restart_alt),
-                    label: const Text('Ripristina dati iniziali'),
-                  ),
-                ],
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushReplacementNamed('/lines'),
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Apri anteprima pubblica'),
+                ),
               ),
             ],
           ),
@@ -155,6 +148,9 @@ class _AdminPageState extends State<AdminPage> {
                     line: lines[i],
                     onEdit: () => _editLine(lines[i]),
                     onDelete: () => _deleteLine(lines[i]),
+                    onToggleVisibility: () => widget.store.saveLine(
+                      lines[i].copyWith(isVisible: !lines[i].isVisible),
+                    ),
                   ),
                   if (i != lines.length - 1) const Divider(height: 1),
                 ],
@@ -245,21 +241,6 @@ class _AdminPageState extends State<AdminPage> {
       'La rimozione vale solo per questa anteprima nel browser.',
     );
     if (confirmed) widget.store.removeAlert(alert.id);
-  }
-
-  Future<void> _resetPreview() async {
-    final confirmed = await _confirm(
-      'Ripristinare i dati iniziali?',
-      'Le modifiche salvate in questo browser verranno rimosse.',
-    );
-    if (confirmed) {
-      widget.store.resetPreview();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Anteprima ripristinata.')),
-        );
-      }
-    }
   }
 
   Future<bool> _confirm(String title, String message) async =>
@@ -562,10 +543,12 @@ class _LineAdminRow extends StatelessWidget {
     required this.line,
     required this.onEdit,
     required this.onDelete,
+    required this.onToggleVisibility,
   });
   final TransitLine line;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onToggleVisibility;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -597,6 +580,18 @@ class _LineAdminRow extends StatelessWidget {
                 '${line.directions.length} gruppi ${line.isCircular ? 'circuito' : 'direzione'}/orario · ${line.stopCount} fermate${line.isManual ? ' · inserita a mano' : ''}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
+              Text(
+                line.isVisible
+                    ? 'Visibile al pubblico'
+                    : 'Nascosta al pubblico',
+                style: TextStyle(
+                  color: line.isVisible
+                      ? JivaioColors.success
+                      : JivaioColors.secondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
               if (line.dataWarning != null) ...[
                 const SizedBox(height: 5),
                 Text(
@@ -609,6 +604,16 @@ class _LineAdminRow extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ),
+        IconButton(
+          tooltip: line.isVisible ? 'Nascondi linea' : 'Mostra linea',
+          onPressed: onToggleVisibility,
+          icon: Icon(
+            line.isVisible
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            color: line.isVisible ? JivaioColors.blue : JivaioColors.muted,
           ),
         ),
         IconButton(
@@ -996,6 +1001,7 @@ class _LineEditorState extends State<_LineEditor> {
       isManual: widget.line?.isManual ?? true,
       dataWarning: widget.line?.dataWarning,
       isCircular: _isCircular || _requiresCircular(_code.text),
+      isVisible: widget.line?.isVisible ?? true,
     );
     Navigator.pop(context, line);
   }

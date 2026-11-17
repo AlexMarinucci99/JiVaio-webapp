@@ -278,6 +278,7 @@ class TransitLine {
     this.isManual = false,
     this.dataWarning,
     this.isCircular = false,
+    this.isVisible = true,
   });
 
   final String id;
@@ -289,6 +290,7 @@ class TransitLine {
   final bool isManual;
   final String? dataWarning;
   final bool isCircular;
+  final bool isVisible;
 
   TransitLine copyWith({
     String? id,
@@ -300,6 +302,7 @@ class TransitLine {
     bool? isManual,
     String? dataWarning,
     bool? isCircular,
+    bool? isVisible,
   }) => TransitLine(
     id: id ?? this.id,
     code: code ?? this.code,
@@ -310,6 +313,7 @@ class TransitLine {
     isManual: isManual ?? this.isManual,
     dataWarning: dataWarning ?? this.dataWarning,
     isCircular: isCircular ?? this.isCircular,
+    isVisible: isVisible ?? this.isVisible,
   );
 
   Map<String, Object?> toJson() => {
@@ -322,6 +326,7 @@ class TransitLine {
     'isManual': isManual,
     'dataWarning': dataWarning,
     'isCircular': isCircular,
+    'isVisible': isVisible,
   };
 
   factory TransitLine.fromJson(Map<String, dynamic> json) {
@@ -343,6 +348,7 @@ class TransitLine {
       isManual: json['isManual'] as bool? ?? false,
       dataWarning: json['dataWarning'] as String?,
       isCircular: isCircular,
+      isVisible: json['isVisible'] as bool? ?? true,
     );
   }
 }

@@ -32,6 +32,7 @@ Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza 
 - `/admin` è separato dalla navigazione pubblica e richiede un account Supabase presente in `admin_users`; senza configurazione Supabase mostra solo la schermata di configurazione.
 - Le modifiche del gestionale restano ancora nel `localStorage` del browser corrente: Auth e autorizzazione sono predisposte, ma i dati non sono ancora sincronizzati con il database condiviso.
 - Il gestionale esporta un backup JSON completo (linee e avvisi) oppure di una singola linea.
+- Ogni linea può essere mostrata o nascosta nell'anteprima pubblica dello stesso browser. Questa impostazione è locale: prima della pubblicazione definitiva va collegata al database e applicata anche tramite le policy di accesso.
 - Da un backup si può importare tutto il contenuto oppure una singola linea, anche se il file contiene più linee. L'importazione unisce i dati: gli ID presenti nella selezione aggiornano i record corrispondenti; gli altri record e i preferiti locali restano.
 - Lo schema iniziale è stato applicato al progetto Supabase `Master-Lines`; tutte le 12 tabelle hanno RLS attivo e sono configurate 22 policy. Il bootstrap di Supabase è stato eseguito dal SQL Editor, quindi la cronologia CLI delle migrazioni non è ancora inizializzata: non eseguire `supabase db push` prima di sincronizzarla. `supabase/bootstrap_admin.sql` mostra come autorizzare manualmente il proprio utente.
 
@@ -56,6 +57,10 @@ flutter run -d chrome \
 ```
 
 La publishable key è destinata al client; non inserire mai una secret/service-role key nella app. Prima dell'accesso: applicare la migrazione, creare il proprio utente Auth e autorizzarne l'UUID con `supabase/bootstrap_admin.sql`. Prossime attività: collegare le schermate del gestionale alle tabelle cloud, importare e controllare i dati AMA aggiornati, poi distribuire il sito.
+
+## Anteprima pubblica per smartphone
+
+La versione web può essere compilata con `flutter build web --release --base-href /Master-Lines/` e pubblicata su GitHub Pages dal ramo `gh-pages`. Il ramo contiene i file compilati di anteprima e va aggiornato a ogni pubblicazione: il push su `main` non aggiorna automaticamente il sito. È una preview pubblica con i dati storici inclusi nella repo: le modifiche salvate in un altro browser non vengono sincronizzate. La preview non configura Supabase e non abilita l'anteprima locale del gestionale. Per un servizio condiviso occorre prima collegare dati e autorizzazioni a Supabase, verificare gli orari e completare la privacy.
 
 ## Sicurezza e privacy
 

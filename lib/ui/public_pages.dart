@@ -48,7 +48,7 @@ class HomePage extends StatelessWidget {
                     child: CircularProgressIndicator(),
                   ),
                 )
-              else if (store.lines.isEmpty)
+              else if (store.visibleLines.isEmpty)
                 const _EmptyState(
                   title: 'Nessuna linea disponibile',
                   subtitle: 'Aggiungi una linea dal gestionale per iniziare.',
@@ -56,7 +56,7 @@ class HomePage extends StatelessWidget {
                 )
               else
                 _LineGrid(
-                  pairs: _directionPairs(store.lines).take(4).toList(),
+                  pairs: _directionPairs(store.visibleLines).take(4).toList(),
                   store: store,
                 ),
               const SizedBox(height: 24),
@@ -246,7 +246,9 @@ class _LinesPageState extends State<LinesPage> {
       child: AnimatedBuilder(
         animation: widget.store,
         builder: (context, _) {
-          final pairs = _directionPairs(widget.store.lines).where((pair) {
+          final pairs = _directionPairs(widget.store.visibleLines).where((
+            pair,
+          ) {
             final query = _search.text.trim().toLowerCase();
             final matchesSearch =
                 query.isEmpty ||
@@ -574,7 +576,7 @@ class _LineDetailPageState extends State<LineDetailPage> {
       child: AnimatedBuilder(
         animation: widget.store,
         builder: (context, _) {
-          final line = widget.store.lineById(widget.lineId);
+          final line = widget.store.visibleLineById(widget.lineId);
           if (line == null) {
             return PageFrame(
               child: _EmptyState(

@@ -20,6 +20,9 @@ class JivaioStore extends ChangeNotifier {
   String? loadError;
   DateTime? lastSavedAt;
 
+  List<TransitLine> get visibleLines =>
+      lines.where((line) => line.isVisible).toList();
+
   List<ServiceAlert> get visibleAlerts =>
       alerts.where((alert) => alert.isCurrentOrUpcoming).toList()
         ..sort((a, b) => b.startsAt.compareTo(a.startsAt));
@@ -70,6 +73,11 @@ class JivaioStore extends ChangeNotifier {
       if (line.id == id) return line;
     }
     return null;
+  }
+
+  TransitLine? visibleLineById(String id) {
+    final line = lineById(id);
+    return line != null && line.isVisible ? line : null;
   }
 
   bool isFavorite(String lineId) => favorites.contains(lineId);
