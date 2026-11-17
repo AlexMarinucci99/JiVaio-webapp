@@ -126,13 +126,23 @@ class TransitDirection {
             .whereType<Map<String, dynamic>>()
             .map(TransitStopTime.fromJson)
             .toList(),
-        trips:
-            (json['trips'] as List<dynamic>?)
-                ?.whereType<Map<String, dynamic>>()
-                .map(TransitTrip.fromJson)
-                .toList() ??
-            _legacyTrips(json),
+        trips: _tripsFromJson(json),
       );
+}
+
+List<TransitTrip> _tripsFromJson(Map<String, dynamic> json) {
+  final rawTrips = json['trips'];
+  final trips = rawTrips is List
+      ? rawTrips
+            .whereType<Map<String, dynamic>>()
+            .map(TransitTrip.fromJson)
+            .toList()
+      : <TransitTrip>[];
+  if (trips.isNotEmpty ||
+      (json['departures'] as List<dynamic>? ?? const []).isEmpty) {
+    return trips;
+  }
+  return _legacyTrips(json);
 }
 
 List<TransitTrip> _legacyTrips(Map<String, dynamic> json) {
@@ -148,9 +158,85 @@ List<TransitTrip> _legacyTrips(Map<String, dynamic> json) {
       TransitTrip(
         id: '${json['id'] ?? 'legacy'}-$i',
         departureTime: departures[i],
-        stops: stops,
+        // The legacy editor stored one sample route for the whole schedule.
+        // Keep it on the first departure only; later routes need verification.
+        stops: i == 0 ? stops : const [],
       ),
   ];
+}
+
+List<TransitDirection> mergeCircularDirections(
+  List<TransitDirection> directions,
+) {
+  final groups = <String, List<TransitDirection>>{};
+  for (final direction in directions) {
+    groups.putIfAbsent(direction.serviceId, () => []).add(direction);
+  }
+
+  final merged = <TransitDirection>[];
+  for (final entry in groups.entries) {
+    final group = entry.value;
+    final trips = <TransitTrip>[];
+    for (final direction in group) {
+      if (direction.trips.isNotEmpty) {
+        trips.addAll(direction.trips);
+      } else if (direction.departures.isEmpty) {
+        if (direction.stops.isNotEmpty) {
+          trips.add(
+            TransitTrip(
+              id: '${direction.id}-legacy',
+              departureTime: '',
+              stops: direction.stops,
+            ),
+          );
+        }
+      } else {
+        for (var i = 0; i < direction.departures.length; i++) {
+          trips.add(
+            TransitTrip(
+              id: '${direction.id}-$i',
+              departureTime: direction.departures[i],
+              stops: i == 0 ? direction.stops : const [],
+            ),
+          );
+        }
+      }
+    }
+    trips.sort((a, b) => a.departureTime.compareTo(b.departureTime));
+    final routeStops = trips
+        .map((trip) => trip.stops)
+        .firstWhere((stops) => stops.isNotEmpty, orElse: () => const []);
+    final warnings = group
+        .map((direction) => direction.dataWarning)
+        .whereType<String>()
+        .toSet();
+    final serviceLabel = group
+        .map((direction) => direction.serviceLabel)
+        .firstWhere((label) => label.isNotEmpty, orElse: () => '');
+    merged.add(
+      TransitDirection(
+        id: 'circuit-${entry.key.isEmpty ? 'general' : entry.key}',
+        originName: routeStops.isEmpty
+            ? group
+                  .map((direction) => direction.originName)
+                  .firstWhere((name) => name.isNotEmpty, orElse: () => '')
+            : routeStops.first.name,
+        destinationName: 'Percorso circolare',
+        departures: trips
+            .map((trip) => trip.departureTime)
+            .where((time) => time.isNotEmpty)
+            .toList(),
+        stops: routeStops,
+        serviceId: entry.key,
+        serviceLabel: serviceLabel.isEmpty
+            ? transitServiceLabel(entry.key)
+            : serviceLabel,
+        dataWarning: warnings.isEmpty ? null : warnings.join(' '),
+        trips: trips,
+      ),
+    );
+  }
+  return merged;
 }
 
 class TransitLine {
@@ -210,25 +296,27 @@ class TransitLine {
     'isCircular': isCircular,
   };
 
-  factory TransitLine.fromJson(Map<String, dynamic> json) => TransitLine(
-    id: json['id'] as String? ?? '',
-    code: json['code'] as String? ?? '',
-    name: json['name'] as String? ?? '',
-    stopCount: (json['stopCount'] as num?)?.toInt() ?? 0,
-    directions: (json['directions'] as List<dynamic>? ?? const [])
+  factory TransitLine.fromJson(Map<String, dynamic> json) {
+    final code = json['code'] as String? ?? '';
+    final name = json['name'] as String? ?? '';
+    final isCircular =
+        json['isCircular'] == true || _isKnownCircularLine(code, name);
+    final directions = (json['directions'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
         .map(TransitDirection.fromJson)
-        .toList(),
-    updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
-    isManual: json['isManual'] as bool? ?? false,
-    dataWarning: json['dataWarning'] as String?,
-    isCircular:
-        json['isCircular'] as bool? ??
-        _isKnownCircularLine(
-          json['code'] as String? ?? '',
-          json['name'] as String? ?? '',
-        ),
-  );
+        .toList();
+    return TransitLine(
+      id: json['id'] as String? ?? '',
+      code: code,
+      name: name,
+      stopCount: (json['stopCount'] as num?)?.toInt() ?? 0,
+      directions: isCircular ? mergeCircularDirections(directions) : directions,
+      updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
+      isManual: json['isManual'] as bool? ?? false,
+      dataWarning: json['dataWarning'] as String?,
+      isCircular: isCircular,
+    );
+  }
 }
 
 bool _isKnownCircularLine(String code, String name) {

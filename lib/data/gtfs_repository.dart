@@ -166,9 +166,6 @@ class GtfsRepository {
       }
 
       if (directions.isEmpty) continue;
-      final stopCount = directions
-          .map((direction) => direction.stops.length)
-          .fold<int>(0, (a, b) => a > b ? a : b);
       final missingRoute = route == null;
       final inferredCode = missingRoute ? _inferredCode(allTrips) : null;
       final missingRouteTrips = allTrips.length;
@@ -178,6 +175,18 @@ class GtfsRepository {
           const {'A', 'B', 'EST', 'OVEST'}.contains(routeCode.toUpperCase()) ||
           routeName.toUpperCase().contains('NAVETTA EST') ||
           routeName.toUpperCase().contains('NAVETTA OVEST');
+      final finalDirections = isCircular
+          ? mergeCircularDirections(directions)
+          : directions;
+      var stopCount = 0;
+      for (final direction in finalDirections) {
+        if (direction.stops.length > stopCount) {
+          stopCount = direction.stops.length;
+        }
+        for (final trip in direction.trips) {
+          if (trip.stops.length > stopCount) stopCount = trip.stops.length;
+        }
+      }
       result.add(
         TransitLine(
           id: routeId,
@@ -192,7 +201,7 @@ class GtfsRepository {
                     ? 'Linea $routeId'
                     : _text(route['route_long_name'])),
           stopCount: stopCount,
-          directions: directions,
+          directions: finalDirections,
           dataWarning: missingRoute
               ? 'Nel GTFS mancano i metadati di route_id $routeId. $missingRouteTrips corse lo usano${inferredCode == null ? '.' : '; i trip_headsign suggeriscono la linea $inferredCode, da confermare.'}'
               : null,

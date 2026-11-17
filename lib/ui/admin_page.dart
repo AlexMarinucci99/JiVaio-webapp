@@ -523,7 +523,7 @@ class _LineEditorState extends State<_LineEditor> {
                 id: '${direction.id}-$i',
                 departureTime: direction.departures[i],
                 headsign: '',
-                stops: direction.stops,
+                stops: i == 0 ? direction.stops : const [],
               ),
           ],
     dataWarning: direction.dataWarning,
@@ -583,6 +583,11 @@ class _LineEditorState extends State<_LineEditor> {
                             hintText: 'Es. 2U',
                           ),
                           validator: _required,
+                          onChanged: (value) {
+                            if (_requiresCircular(value) && !_isCircular) {
+                              setState(() => _isCircular = true);
+                            }
+                          },
                         ),
                         TextFormField(
                           controller: _name,
@@ -633,37 +638,40 @@ class _LineEditorState extends State<_LineEditor> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    value: _isCircular,
+                    value: _isCircular || _requiresCircular(_code.text),
                     title: const Text('Linea circolare / ad anello'),
                     subtitle: const Text(
                       'Usa un solo percorso per corsa: non viene richiesto il ritorno.',
                     ),
-                    onChanged: (value) => setState(() {
-                      _isCircular = value;
-                      if (value &&
-                          widget.line == null &&
-                          _directions.length > 1) {
-                        final removed = _directions.removeAt(1);
-                        removed.dispose();
-                      }
-                      for (var i = 0; i < _directions.length; i++) {
-                        _directions[i].directionName = value
-                            ? 'Circuito ${i + 1}'
-                            : (i.isEven ? 'Andata' : 'Ritorno');
-                      }
-                      if (!value && _directions.length == 1) {
-                        _directions.add(
-                          _DirectionFields(
-                            id: 'manual-return-${DateTime.now().microsecondsSinceEpoch}',
-                            directionName: 'Ritorno',
-                            serviceId: _directions.first.serviceId,
-                            origin: _directions.first.destination.text,
-                            destination: _directions.first.origin.text,
-                            trips: const [],
-                          ),
-                        );
-                      }
-                    }),
+                    onChanged: (value) {
+                      if (!value && _requiresCircular(_code.text)) return;
+                      setState(() {
+                        _isCircular = value;
+                        if (value &&
+                            widget.line == null &&
+                            _directions.length > 1) {
+                          final removed = _directions.removeAt(1);
+                          removed.dispose();
+                        }
+                        for (var i = 0; i < _directions.length; i++) {
+                          _directions[i].directionName = value
+                              ? 'Circuito ${i + 1}'
+                              : (i.isEven ? 'Andata' : 'Ritorno');
+                        }
+                        if (!value && _directions.length == 1) {
+                          _directions.add(
+                            _DirectionFields(
+                              id: 'manual-return-${DateTime.now().microsecondsSinceEpoch}',
+                              directionName: 'Ritorno',
+                              serviceId: _directions.first.serviceId,
+                              origin: _directions.first.destination.text,
+                              destination: _directions.first.origin.text,
+                              trips: const [],
+                            ),
+                          );
+                        }
+                      });
+                    },
                   ),
                   const SizedBox(height: 7),
                   Text(
@@ -745,12 +753,16 @@ class _LineEditorState extends State<_LineEditor> {
       name: _name.text.trim(),
       stopCount: int.parse(_stopCount.text),
       directions: _directions
-          .map((fields) => fields.toDirection(isCircular: _isCircular))
+          .map(
+            (fields) => fields.toDirection(
+              isCircular: _isCircular || _requiresCircular(_code.text),
+            ),
+          )
           .toList(),
       updatedAt: now,
       isManual: widget.line?.isManual ?? true,
       dataWarning: widget.line?.dataWarning,
-      isCircular: _isCircular,
+      isCircular: _isCircular || _requiresCircular(_code.text),
     );
     Navigator.pop(context, line);
   }
@@ -766,6 +778,9 @@ class _LineEditorState extends State<_LineEditor> {
         .length;
     return 'Circuito $variant · ${direction.serviceLabel}';
   }
+
+  bool _requiresCircular(String code) =>
+      const {'A', 'B', 'EST', 'OVEST'}.contains(code.trim().toUpperCase());
 
   void _addTrip(_DirectionFields direction) {
     setState(() {
