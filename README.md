@@ -26,7 +26,7 @@ Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza 
 - `/admin` è separato dalla navigazione pubblica e richiede un account Supabase presente in `admin_users`; senza configurazione Supabase mostra solo la schermata di configurazione.
 - Le modifiche del gestionale restano ancora nel `localStorage` del browser corrente: Auth e autorizzazione sono predisposte, ma i dati non sono ancora sincronizzati con il database condiviso.
 - È disponibile l'esportazione di un backup JSON del contenuto locale.
-- La migrazione Supabase definisce il modello GTFS e gli avvisi, ma non è stata eseguita su un progetto cloud. `supabase/bootstrap_admin.sql` mostra come autorizzare manualmente il proprio utente.
+- Lo schema iniziale è stato applicato al progetto Supabase `Master-Lines`; tutte le 12 tabelle hanno RLS attivo e sono configurate 22 policy. Il bootstrap di Supabase è stato eseguito dal SQL Editor, quindi la cronologia CLI delle migrazioni non è ancora inizializzata: non eseguire `supabase db push` prima di sincronizzarla. `supabase/bootstrap_admin.sql` mostra come autorizzare manualmente il proprio utente.
 
 Gli avvisi inseriti a mano si aggiornano subito nel sito. Posizione dei mezzi e ritardi automatici richiedono un feed realtime dell'operatore.
 
