@@ -517,7 +517,11 @@ class _LineCard extends StatelessWidget {
                 runSpacing: 8,
                 children: direction.departures
                     .take(4)
-                    .map((time) => _TimePill(time: time))
+                    .map(
+                      (time) => _TimePill(
+                        time: _departureLabel(line, direction, time),
+                      ),
+                    )
                     .toList(),
               ),
             const SizedBox(height: 14),
@@ -666,6 +670,7 @@ class LineDetailPage extends StatelessWidget {
                                     (direction) => _DirectionDetail(
                                       key: ValueKey(direction.id),
                                       direction: direction,
+                                      line: line,
                                       isCircular: line.isCircular,
                                     ),
                                   )
@@ -689,10 +694,12 @@ class LineDetailPage extends StatelessWidget {
 class _DirectionDetail extends StatefulWidget {
   const _DirectionDetail({
     required this.direction,
+    required this.line,
     required this.isCircular,
     super.key,
   });
   final TransitDirection direction;
+  final TransitLine line;
   final bool isCircular;
 
   @override
@@ -734,12 +741,27 @@ class _DirectionDetailState extends State<_DirectionDetail> {
                     runSpacing: 9,
                     children: trips.isEmpty
                         ? direction.departures
-                              .map((time) => _TimePill(time: time, large: true))
+                              .map(
+                                (time) => _TimePill(
+                                  time: _departureLabel(
+                                    widget.line,
+                                    direction,
+                                    time,
+                                  ),
+                                  large: true,
+                                ),
+                              )
                               .toList()
                         : [
                             for (var i = 0; i < trips.length; i++)
                               ChoiceChip(
-                                label: Text(trips[i].departureTime),
+                                label: Text(
+                                  _departureLabel(
+                                    widget.line,
+                                    direction,
+                                    trips[i].departureTime,
+                                  ),
+                                ),
                                 selected: i == _selectedTripIndex,
                                 onSelected: (_) =>
                                     setState(() => _selectedTripIndex = i),
@@ -754,11 +776,12 @@ class _DirectionDetailState extends State<_DirectionDetail> {
         Text(
           selectedTrip == null || selectedTrip.departureTime.isEmpty
               ? 'Percorso e orari di una corsa'
-              : 'Corsa delle ${selectedTrip.departureTime}',
+              : 'Corsa delle ${_departureLabel(widget.line, direction, selectedTrip.departureTime)}',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
-        if (direction.dataWarning != null) ...[
+        if (direction.dataWarning != null &&
+            !_hideLineAReviewWarning(widget.line, direction.dataWarning!)) ...[
           _PublicDataWarning(text: direction.dataWarning!),
           const SizedBox(height: 12),
         ],
@@ -777,6 +800,12 @@ class _DirectionDetailState extends State<_DirectionDetail> {
                     stop: stops[i],
                     first: i == 0,
                     last: i == stops.length - 1,
+                    timeLabel: _estimatedStopLabel(
+                      widget.line,
+                      direction,
+                      selectedTrip,
+                      stops[i],
+                    ),
                   ),
               ],
             ),
@@ -1131,10 +1160,16 @@ class _TimePill extends StatelessWidget {
 }
 
 class _StopRow extends StatelessWidget {
-  const _StopRow({required this.stop, required this.first, required this.last});
+  const _StopRow({
+    required this.stop,
+    required this.first,
+    required this.last,
+    this.timeLabel,
+  });
   final TransitStopTime stop;
   final bool first;
   final bool last;
+  final String? timeLabel;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -1185,7 +1220,7 @@ class _StopRow extends StatelessWidget {
             ),
           ),
           Text(
-            stop.time,
+            timeLabel ?? stop.time,
             style: const TextStyle(
               fontSize: 14,
               color: JivaioColors.navy,
@@ -1271,6 +1306,40 @@ class _LineDirectionPair {
   const _LineDirectionPair(this.line, this.direction);
   final TransitLine line;
   final TransitDirection direction;
+}
+
+bool _isLineAWeekday(TransitLine line, TransitDirection direction) =>
+    line.code.trim().toUpperCase() == 'A' &&
+    (direction.serviceId == '1' || direction.serviceId.isEmpty);
+
+String _departureLabel(
+  TransitLine line,
+  TransitDirection direction,
+  String time,
+) =>
+    _isLineAWeekday(line, direction) &&
+        (time.trim() == '06:30' || time.trim() == '6:30')
+    ? '$time (6S)'
+    : time;
+
+bool _hideLineAReviewWarning(TransitLine line, String warning) =>
+    line.code.trim().toUpperCase() == 'A' &&
+    warning.contains('La corsa delle 06:30 ha un orario stimato:');
+
+String? _estimatedStopLabel(
+  TransitLine line,
+  TransitDirection direction,
+  TransitTrip? trip,
+  TransitStopTime stop,
+) {
+  if (_isLineAWeekday(line, direction) &&
+      (trip?.departureTime == '06:30' || trip?.departureTime == '6:30') &&
+      (direction.dataWarning?.contains('S.S. 80 alle 06:47') ?? false) &&
+      stop.name.toUpperCase().replaceAll(' ', '').contains('S.S.80') &&
+      stop.time == '06:47') {
+    return '06:47 (stimato)';
+  }
+  return null;
 }
 
 List<_LineDirectionPair> _directionPairs(List<TransitLine> lines) => [
