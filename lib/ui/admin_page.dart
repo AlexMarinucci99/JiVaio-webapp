@@ -1349,15 +1349,9 @@ class _TripAdminRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: TextFormField(
+                child: _TimeInput(
                   controller: trip.departureTime,
-                  decoration: const InputDecoration(
-                    labelText: 'Ora di partenza',
-                    hintText: '07:15',
-                    prefixIcon: Icon(Icons.schedule),
-                  ),
-                  keyboardType: TextInputType.datetime,
-                  validator: _validateOptionalTime,
+                  label: 'Ora di partenza',
                 ),
               ),
               IconButton(
@@ -1390,6 +1384,56 @@ class _TripAdminRow extends StatelessWidget {
         ],
       ),
     ),
+  );
+}
+
+class _TimeInput extends StatelessWidget {
+  const _TimeInput({required this.controller, required this.label});
+
+  final TextEditingController controller;
+  final String label;
+
+  Future<void> _pickTime(BuildContext context) async {
+    final match = RegExp(r'^(\d{1,2}):([0-5]\d)$')
+        .firstMatch(controller.text.trim());
+    final hour = match == null ? null : int.tryParse(match.group(1)!);
+    final minute = match == null ? null : int.tryParse(match.group(2)!);
+    final initialTime = hour != null && hour < 24 && minute != null
+        ? TimeOfDay(hour: hour, minute: minute)
+        : TimeOfDay.now();
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      helpText: 'SELEZIONA ORARIO',
+      cancelText: 'Annulla',
+      confirmText: 'Conferma',
+      hourLabelText: 'Ora',
+      minuteLabelText: 'Minuti',
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (selected == null) return;
+    controller.text =
+        '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) => TextFormField(
+    controller: controller,
+    decoration: InputDecoration(
+      labelText: label,
+      hintText: '07:15',
+      prefixIcon: const Icon(Icons.schedule),
+      suffixIcon: IconButton(
+        tooltip: 'Scegli orario',
+        onPressed: () => _pickTime(context),
+        icon: const Icon(Icons.access_time_filled, color: JivaioColors.blue),
+      ),
+    ),
+    keyboardType: TextInputType.datetime,
+    validator: _validateOptionalTime,
   );
 }
 
@@ -1467,6 +1511,23 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
     );
   }
 
+  Future<void> _editStopTimes() async {
+    if (!_formKey.currentState!.validate()) return;
+    final lines = _stops.text.split('\n');
+    if (!lines.any((line) => line.trim().isNotEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inserisci prima almeno una fermata.')),
+      );
+      return;
+    }
+    final updated = await showDialog<String>(
+      context: context,
+      builder: (_) => _StopTimesEditor(lines: lines),
+    );
+    if (updated == null || !mounted) return;
+    setState(() => _stops.text = updated);
+  }
+
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: const Text('Percorso di questa partenza'),
@@ -1506,6 +1567,15 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
               'Formato: Nome fermata | HH:MM, una fermata per riga. Se lasci vuoto l’orario della prima fermata useremo quello di partenza.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _editStopTimes,
+                icon: const Icon(Icons.schedule),
+                label: const Text('Modifica orari delle fermate'),
+              ),
+            ),
           ],
         ),
       ),
@@ -1520,6 +1590,114 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
         icon: const Icon(Icons.save_outlined),
         label: const Text('Salva percorso'),
       ),
+    ],
+  );
+}
+
+class _StopTimeFields {
+  _StopTimeFields(String line)
+    : original = line,
+      name = line.split('|').first.trim(),
+      time = TextEditingController(
+        text: line.contains('|')
+            ? (line.split('|')[1].trim() == '--:--'
+                  ? ''
+                  : line.split('|')[1].trim())
+            : '',
+      );
+
+  final String original;
+  final String name;
+  final TextEditingController time;
+}
+
+class _StopTimesEditor extends StatefulWidget {
+  const _StopTimesEditor({required this.lines});
+  final List<String> lines;
+
+  @override
+  State<_StopTimesEditor> createState() => _StopTimesEditorState();
+}
+
+class _StopTimesEditorState extends State<_StopTimesEditor> {
+  final _formKey = GlobalKey<FormState>();
+  late final List<_StopTimeFields> _rows;
+
+  @override
+  void initState() {
+    super.initState();
+    _rows = widget.lines.map(_StopTimeFields.new).toList();
+  }
+
+  @override
+  void dispose() {
+    for (final row in _rows) {
+      row.time.dispose();
+    }
+    super.dispose();
+  }
+
+  void _save() {
+    if (!_formKey.currentState!.validate()) return;
+    final text = _rows
+        .map((row) {
+          if (row.original.trim().isEmpty) return row.original;
+          final time = row.time.text.trim();
+          return '${row.name} | ${time.isEmpty ? '' : _normalizeTime(time)}';
+        })
+        .join('\n');
+    Navigator.pop(context, text);
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Orari delle fermate'),
+    content: SizedBox(
+      width: 620,
+      child: Form(
+        key: _formKey,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Text(
+              'Scrivi l’orario o usa l’icona dell’orologio. Puoi lasciare vuoti gli orari che non conosci.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            for (final row in _rows)
+              if (row.original.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: JivaioColors.page,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: JivaioColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          row.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        _TimeInput(controller: row.time, label: 'Orario'),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+        ),
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Annulla'),
+      ),
+      FilledButton(onPressed: _save, child: const Text('Applica orari')),
     ],
   );
 }

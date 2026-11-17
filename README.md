@@ -55,6 +55,11 @@ flutter run -d chrome \
 
 La publishable key è destinata al client; non inserire mai una secret/service-role key nella app. Prima dell'accesso: applicare la migrazione, creare il proprio utente Auth e autorizzarne l'UUID con `supabase/bootstrap_admin.sql`. Prossime attività: collegare le schermate del gestionale alle tabelle cloud, importare e controllare i dati AMA aggiornati, poi distribuire il sito.
 
+## Sicurezza e privacy
+
+- [Segnalazioni di sicurezza](SECURITY.md): istruzioni per comunicare vulnerabilità in privato.
+- [Privacy](PRIVACY.md): bozza da completare con titolare, recapiti e dettagli dei fornitori prima della pubblicazione.
+
 ## Concept grafici
 
 Le immagini di riferimento sono in [`design/concepts/`](design/concepts/). La lista linee riprende la schermata Android condivisa e la adatta a desktop e mobile.
