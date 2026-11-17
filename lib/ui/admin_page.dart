@@ -1075,7 +1075,7 @@ class _DirectionForm extends StatelessWidget {
         else
           for (var i = 0; i < fields.trips.length; i++)
             _TripAdminRow(
-              key: ValueKey(fields.trips[i].id),
+              key: ValueKey('${fields.id}-${fields.trips[i].id}-$i'),
               trip: fields.trips[i],
               onEditStops: () => onEditTripStops(i),
               onRemove: () => onRemoveTrip(i),

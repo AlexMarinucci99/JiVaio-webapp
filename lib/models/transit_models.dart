@@ -202,6 +202,25 @@ List<TransitDirection> mergeCircularDirections(
         }
       }
     }
+    final usedTripIds = <String>{};
+    for (var i = 0; i < trips.length; i++) {
+      final trip = trips[i];
+      final baseId = trip.id.isEmpty ? 'trip-${entry.key}-$i' : trip.id;
+      var tripId = baseId;
+      var suffix = 2;
+      while (!usedTripIds.add(tripId)) {
+        tripId = '$baseId-$suffix';
+        suffix++;
+      }
+      if (tripId != trip.id) {
+        trips[i] = TransitTrip(
+          id: tripId,
+          departureTime: trip.departureTime,
+          headsign: trip.headsign,
+          stops: trip.stops,
+        );
+      }
+    }
     trips.sort((a, b) => a.departureTime.compareTo(b.departureTime));
     final routeStops = trips
         .map((trip) => trip.stops)
