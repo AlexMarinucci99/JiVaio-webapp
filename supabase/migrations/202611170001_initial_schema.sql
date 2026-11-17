@@ -5,19 +5,23 @@ create table public.admin_users (
   added_at timestamptz not null default now()
 );
 
-create or replace function public.is_jivaio_admin()
+create schema if not exists private;
+
+create or replace function private.is_jivaio_admin()
 returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select exists (
     select 1 from public.admin_users where user_id = (select auth.uid())
   );
 $$;
 
-grant execute on function public.is_jivaio_admin() to authenticated;
+revoke execute on function private.is_jivaio_admin() from public, anon;
+grant usage on schema private to authenticated;
+grant execute on function private.is_jivaio_admin() to authenticated;
 
 create table public.feed_versions (
   id uuid primary key default gen_random_uuid(),
@@ -177,57 +181,58 @@ alter table public.service_alert_routes enable row level security;
 alter table public.service_alert_stops enable row level security;
 
 create policy "admins can read admin list" on public.admin_users
-  for select to authenticated using (public.is_jivaio_admin());
+  for select to authenticated using ((select private.is_jivaio_admin()));
 create policy "admins manage feed versions" on public.feed_versions
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public can read active feed pointer" on public.active_feed
   for select to anon, authenticated using (true);
 create policy "admins manage active feed pointer" on public.active_feed
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 
 create policy "public read active routes" on public.routes
   for select to anon, authenticated using (feed_id = (select feed_id from public.active_feed where singleton));
 create policy "admins manage routes" on public.routes
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public read active stops" on public.stops
   for select to anon, authenticated using (feed_id = (select feed_id from public.active_feed where singleton));
 create policy "admins manage stops" on public.stops
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public read active calendars" on public.service_calendars
   for select to anon, authenticated using (feed_id = (select feed_id from public.active_feed where singleton));
 create policy "admins manage calendars" on public.service_calendars
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public read active trips" on public.trips
   for select to anon, authenticated using (feed_id = (select feed_id from public.active_feed where singleton));
 create policy "admins manage trips" on public.trips
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public read active stop times" on public.stop_times
   for select to anon, authenticated using (feed_id = (select feed_id from public.active_feed where singleton));
 create policy "admins manage stop times" on public.stop_times
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public read active calendar exceptions" on public.calendar_dates
   for select to anon, authenticated using (feed_id = (select feed_id from public.active_feed where singleton));
 create policy "admins manage calendar exceptions" on public.calendar_dates
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 
 create policy "public read current and upcoming alerts" on public.service_alerts
   for select to anon, authenticated using (is_published and (ends_at is null or ends_at >= now()));
 create policy "admins manage alerts" on public.service_alerts
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public read routes for visible alerts" on public.service_alert_routes
   for select to anon, authenticated using (
     exists (select 1 from public.service_alerts a where a.id = alert_id and a.is_published and (a.ends_at is null or a.ends_at >= now()))
   );
 create policy "admins manage alert routes" on public.service_alert_routes
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 create policy "public read stops for visible alerts" on public.service_alert_stops
   for select to anon, authenticated using (
     exists (select 1 from public.service_alerts a where a.id = alert_id and a.is_published and (a.ends_at is null or a.ends_at >= now()))
   );
 create policy "admins manage alert stops" on public.service_alert_stops
-  for all to authenticated using (public.is_jivaio_admin()) with check (public.is_jivaio_admin());
+  for all to authenticated using ((select private.is_jivaio_admin())) with check ((select private.is_jivaio_admin()));
 
 grant usage on schema public to anon, authenticated;
+grant select on public.admin_users to authenticated;
 grant select on public.active_feed, public.routes, public.stops, public.service_calendars,
   public.trips, public.stop_times, public.calendar_dates, public.service_alerts,
   public.service_alert_routes, public.service_alert_stops to anon, authenticated;

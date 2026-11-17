@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'data/jivaio_store.dart';
+import 'data/supabase_config.dart';
 import 'theme/jivaio_theme.dart';
-import 'ui/admin_page.dart';
+import 'ui/admin_access_page.dart';
 import 'ui/public_pages.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SupabaseConfig.initialize();
   runApp(const JivaioRoot());
 }
 
@@ -47,7 +50,7 @@ class _JivaioRootState extends State<JivaioRoot> {
       builder: (_) => switch (name) {
         '/lines' => LinesPage(store: _store),
         '/alerts' => AlertsPage(store: _store),
-        '/admin' => AdminPage(store: _store),
+        '/admin' => AdminAccessPage(store: _store),
         _ => HomePage(store: _store),
       },
     );

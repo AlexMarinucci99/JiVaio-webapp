@@ -524,7 +524,6 @@ class _LocalDataCaption extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(children: [
     const Expanded(child: Text('JiVaio è un progetto indipendente. Verifica sempre gli orari ufficiali AMA prima di partire.', style: TextStyle(color: JivaioColors.muted, fontSize: 12))),
-    TextButton.icon(onPressed: () => Navigator.of(context).pushNamed('/admin'), icon: const Icon(Icons.settings_outlined, size: 17), label: const Text('Gestionale')),
   ]);
 }
 

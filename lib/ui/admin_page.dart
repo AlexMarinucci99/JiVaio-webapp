@@ -9,8 +9,9 @@ import '../theme/jivaio_theme.dart';
 import 'jivaio_app.dart';
 
 class AdminPage extends StatefulWidget {
-  const AdminPage({required this.store, super.key});
+  const AdminPage({required this.store, required this.onSignOut, super.key});
   final JivaioStore store;
+  final VoidCallback onSignOut;
 
   @override
   State<AdminPage> createState() => _AdminPageState();
@@ -28,7 +29,10 @@ class _AdminPageState extends State<AdminPage> {
         builder: (context, _) => PageFrame(width: 1180, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Gestione JiVaio', style: Theme.of(context).textTheme.headlineSmall), const SizedBox(height: 5), Text('Modifica i dati di anteprima dal browser.', style: Theme.of(context).textTheme.bodyLarge)])),
-            OutlinedButton.icon(onPressed: _exportSnapshot, icon: const Icon(Icons.download_outlined), label: const Text('Esporta backup')),
+            Wrap(spacing: 8, children: [
+              OutlinedButton.icon(onPressed: _exportSnapshot, icon: const Icon(Icons.download_outlined), label: const Text('Esporta backup')),
+              OutlinedButton.icon(onPressed: widget.onSignOut, icon: const Icon(Icons.logout), label: const Text('Esci')),
+            ]),
           ]),
           const SizedBox(height: 18),
           const _AdminNotice(),
@@ -111,7 +115,9 @@ class _AdminPageState extends State<AdminPage> {
     final confirmed = await _confirm('Ripristinare i dati iniziali?', 'Le modifiche salvate in questo browser verranno rimosse.');
     if (confirmed) {
       widget.store.resetPreview();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anteprima ripristinata.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anteprima ripristinata.')));
+      }
     }
   }
 
@@ -146,7 +152,7 @@ class _AdminNotice extends StatelessWidget {
     child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Icon(Icons.phonelink_outlined, color: Color(0xFF95620B)),
       SizedBox(width: 11),
-      Expanded(child: Text('Modalità locale: le modifiche sono salvate solo in questo browser e non sono visibili agli utenti. Questa pagina non ha ancora autenticazione. Prima della pubblicazione collegheremo Supabase Auth e le regole di accesso.', style: TextStyle(color: Color(0xFF755214), height: 1.45))),
+      Expanded(child: Text('Modalità anteprima: le modifiche sono salvate solo in questo browser. L’accesso è riservato agli account abilitati; il database condiviso verrà collegato in una fase successiva.', style: TextStyle(color: Color(0xFF755214), height: 1.45))),
     ]),
   );
 }
@@ -235,7 +241,9 @@ class _LineEditorState extends State<_LineEditor> {
               TextFormField(controller: _name, decoration: const InputDecoration(labelText: 'Nome linea', hintText: 'Es. Terminalbus – L’Aquilone'), validator: _required),
               TextFormField(controller: _stopCount, decoration: const InputDecoration(labelText: 'Numero fermate', hintText: 'Es. 24'), keyboardType: TextInputType.number, validator: (v) => int.tryParse(v ?? '') == null ? 'Inserisci un numero' : null),
             ];
-            if (constraints.maxWidth < 580) return Column(children: [for (final field in fields) Padding(padding: const EdgeInsets.only(bottom: 12), child: field)]);
+            if (constraints.maxWidth < 580) {
+              return Column(children: [for (final field in fields) Padding(padding: const EdgeInsets.only(bottom: 12), child: field)]);
+            }
             return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [for (var i = 0; i < fields.length; i++) Expanded(child: Padding(padding: EdgeInsets.only(right: i == 2 ? 0 : 12), child: fields[i]))]);
           }),
           const SizedBox(height: 7),

@@ -23,9 +23,10 @@ Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza 
 - Le pagine Home, Linee, Dettaglio, Avvisi e Gestionale sono realizzate in Flutter Web.
 - La schermata Linee legge i file GTFS JSON copiati da JiVaio e li trasforma in linee, direzioni, partenze e fermate.
 - I dati iniziali sono una **anteprima storica incompleta**; non rappresentano l'elenco AMA aggiornato.
-- Le modifiche dal gestionale restano nel `localStorage` del browser corrente. Il gestionale non ha ancora login e non è collegato a un database condiviso.
+- `/admin` è separato dalla navigazione pubblica e richiede un account Supabase presente in `admin_users`; senza configurazione Supabase mostra solo la schermata di configurazione.
+- Le modifiche del gestionale restano ancora nel `localStorage` del browser corrente: Auth e autorizzazione sono predisposte, ma i dati non sono ancora sincronizzati con il database condiviso.
 - È disponibile l'esportazione di un backup JSON del contenuto locale.
-- La migrazione Supabase definisce il modello GTFS e gli avvisi, ma non è stata eseguita su un progetto cloud.
+- La migrazione Supabase definisce il modello GTFS e gli avvisi, ma non è stata eseguita su un progetto cloud. `supabase/bootstrap_admin.sql` mostra come autorizzare manualmente il proprio utente.
 
 Gli avvisi inseriti a mano si aggiornano subito nel sito. Posizione dei mezzi e ritardi automatici richiedono un feed realtime dell'operatore.
 
@@ -33,10 +34,12 @@ Gli avvisi inseriti a mano si aggiornano subito nel sito. Posizione dei mezzi e 
 
 ```sh
 flutter pub get
-flutter run -d chrome
+flutter run -d chrome \
+  --dart-define=SUPABASE_URL='https://YOUR-PROJECT.supabase.co' \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY='YOUR-PUBLISHABLE-KEY'
 ```
 
-Il backend cloud non è ancora collegato. Prossime attività: verificare lo schema SQL sul progetto Supabase, aggiungere autenticazione amministratore, importare e controllare i dati AMA aggiornati, poi distribuire il sito.
+La publishable key è destinata al client; non inserire mai una secret/service-role key nella app. Prima dell'accesso: applicare la migrazione, creare il proprio utente Auth e autorizzarne l'UUID con `supabase/bootstrap_admin.sql`. Prossime attività: collegare le schermate del gestionale alle tabelle cloud, importare e controllare i dati AMA aggiornati, poi distribuire il sito.
 
 ## Concept grafici
 
