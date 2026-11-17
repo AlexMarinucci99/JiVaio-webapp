@@ -1321,6 +1321,7 @@ class _StopRow extends StatelessWidget {
           ),
           Text(
             timeLabel ?? stop.time,
+            textAlign: TextAlign.end,
             style: const TextStyle(
               fontSize: 14,
               color: JivaioColors.navy,
@@ -1460,6 +1461,11 @@ String _stopTimeLabel(
       stop.name.toUpperCase().replaceAll(' ', '').contains('S.S.80') &&
       stop.time == '06:47';
   final time = _serviceTimeLabel(direction, stop.time);
+  if (stop.isEstimated &&
+      (line.code.trim().toUpperCase() == 'NB' ||
+          direction.serviceId == 'NIGHT_THSAT')) {
+    return '$time\norario previsto (stima)';
+  }
   return stop.isEstimated || isLineAEstimate ? '$time (stimato)' : time;
 }
 
