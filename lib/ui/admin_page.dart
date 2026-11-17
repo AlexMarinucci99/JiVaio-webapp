@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
@@ -52,6 +54,11 @@ class _AdminPageState extends State<AdminPage> {
                   Wrap(
                     spacing: 8,
                     children: [
+                      OutlinedButton.icon(
+                        onPressed: _chooseBackupFile,
+                        icon: const Icon(Icons.upload_file_outlined),
+                        label: const Text('Importa backup'),
+                      ),
                       OutlinedButton.icon(
                         onPressed: _exportSnapshot,
                         icon: const Icon(Icons.download_outlined),
@@ -296,6 +303,103 @@ class _AdminPageState extends State<AdminPage> {
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Backup JSON scaricato.')));
   }
+
+  void _chooseBackupFile() {
+    final input = web.HTMLInputElement()
+      ..type = 'file'
+      ..accept = '.json,application/json'
+      ..style.display = 'none';
+    web.document.body?.appendChild(input);
+    input.addEventListener(
+      'change',
+      ((web.Event _) {
+        final file = input.files?.item(0);
+        input.remove();
+        if (file != null) unawaited(_importBackupFile(file));
+      }).toJS,
+    );
+    input.click();
+  }
+
+  Future<void> _importBackupFile(web.File file) async {
+    try {
+      final source = (await file.text().toDart).toDart;
+      final decoded = jsonDecode(source);
+      if (decoded is! Map<String, dynamic> ||
+          decoded['lines'] is! List ||
+          decoded['alerts'] is! List) {
+        throw const FormatException(
+          'Il file non contiene un backup JiVaio con linee e avvisi.',
+        );
+      }
+
+      final importedLines = <TransitLine>[];
+      for (final row in decoded['lines'] as List<dynamic>) {
+        if (row is! Map<String, dynamic>) {
+          throw const FormatException('Una linea nel backup non è valida.');
+        }
+        final line = TransitLine.fromJson(row);
+        if (line.id.trim().isEmpty) {
+          throw const FormatException('Una linea non ha un identificativo.');
+        }
+        importedLines.add(line);
+      }
+
+      final importedAlerts = <ServiceAlert>[];
+      for (final row in decoded['alerts'] as List<dynamic>) {
+        if (row is! Map<String, dynamic>) {
+          throw const FormatException('Un avviso nel backup non è valido.');
+        }
+        final alert = ServiceAlert.fromJson(row);
+        if (alert.id.trim().isEmpty) {
+          throw const FormatException('Un avviso non ha un identificativo.');
+        }
+        importedAlerts.add(alert);
+      }
+      if (importedLines.isEmpty && importedAlerts.isEmpty) {
+        throw const FormatException(
+          'Il backup non contiene dati da importare.',
+        );
+      }
+
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Importare il backup?'),
+          content: Text(
+            'Il file contiene ${importedLines.length} linee e ${importedAlerts.length} avvisi. I record con lo stesso ID saranno aggiornati dal backup; gli altri dati di questo browser e i preferiti resteranno.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.upload_file_outlined),
+              label: const Text('Importa e unisci'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      widget.store.importBackup(
+        importedLines: importedLines,
+        importedAlerts: importedAlerts,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Backup importato e unito ai dati locali.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Non riesco a importare il backup: $error')),
+      );
+    }
+  }
 }
 
 class _AdminNotice extends StatelessWidget {
@@ -315,7 +419,7 @@ class _AdminNotice extends StatelessWidget {
         SizedBox(width: 11),
         Expanded(
           child: Text(
-            'Modalità anteprima: le modifiche sono salvate solo in questo browser. L’accesso è riservato agli account abilitati; il database condiviso verrà collegato in una fase successiva.',
+            'Modalità anteprima: le modifiche sono salvate solo in questo browser. Usa Esporta backup e Importa backup per trasferirle tra browser. Il database condiviso verrà collegato in una fase successiva.',
             style: TextStyle(color: Color(0xFF755214), height: 1.45),
           ),
         ),

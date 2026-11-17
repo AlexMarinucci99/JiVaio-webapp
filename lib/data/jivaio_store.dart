@@ -20,10 +20,9 @@ class JivaioStore extends ChangeNotifier {
   String? loadError;
   DateTime? lastSavedAt;
 
-  List<ServiceAlert> get visibleAlerts => alerts
-      .where((alert) => alert.isCurrentOrUpcoming)
-      .toList()
-    ..sort((a, b) => b.startsAt.compareTo(a.startsAt));
+  List<ServiceAlert> get visibleAlerts =>
+      alerts.where((alert) => alert.isCurrentOrUpcoming).toList()
+        ..sort((a, b) => b.startsAt.compareTo(a.startsAt));
 
   Future<void> load() async {
     try {
@@ -51,7 +50,9 @@ class JivaioStore extends ChangeNotifier {
           if (savedFavorites is List) {
             favorites.addAll(savedFavorites.map((item) => item.toString()));
           }
-          lastSavedAt = DateTime.tryParse(decoded['lastSavedAt'] as String? ?? '');
+          lastSavedAt = DateTime.tryParse(
+            decoded['lastSavedAt'] as String? ?? '',
+          );
         }
       }
     } catch (error) {
@@ -88,6 +89,29 @@ class JivaioStore extends ChangeNotifier {
       lines = changed;
     }
     lines.sort((a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()));
+    _save();
+  }
+
+  void importBackup({
+    required List<TransitLine> importedLines,
+    required List<ServiceAlert> importedAlerts,
+  }) {
+    final mergedLines = <String, TransitLine>{
+      for (final line in lines) line.id: line,
+    };
+    for (final line in importedLines) {
+      mergedLines[line.id] = line;
+    }
+    lines = mergedLines.values.toList()
+      ..sort((a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()));
+
+    final mergedAlerts = <String, ServiceAlert>{
+      for (final alert in alerts) alert.id: alert,
+    };
+    for (final alert in importedAlerts) {
+      mergedAlerts[alert.id] = alert;
+    }
+    alerts = mergedAlerts.values.toList();
     _save();
   }
 
@@ -130,12 +154,15 @@ class JivaioStore extends ChangeNotifier {
 
   void _save() {
     lastSavedAt = DateTime.now();
-    web.window.localStorage.setItem(_storageKey, jsonEncode({
-      'lines': lines.map((line) => line.toJson()).toList(),
-      'alerts': alerts.map((alert) => alert.toJson()).toList(),
-      'favorites': favorites.toList(),
-      'lastSavedAt': lastSavedAt!.toIso8601String(),
-    }));
+    web.window.localStorage.setItem(
+      _storageKey,
+      jsonEncode({
+        'lines': lines.map((line) => line.toJson()).toList(),
+        'alerts': alerts.map((alert) => alert.toJson()).toList(),
+        'favorites': favorites.toList(),
+        'lastSavedAt': lastSavedAt!.toIso8601String(),
+      }),
+    );
     notifyListeners();
   }
 
