@@ -282,21 +282,100 @@ class _AdminPageState extends State<AdminPage> {
       ) ??
       false;
 
-  void _exportSnapshot() {
+  Future<TransitLine?> _chooseLine(
+    List<TransitLine> lines, {
+    required String title,
+  }) {
+    final sorted = [...lines]
+      ..sort((a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()));
+    return showDialog<TransitLine>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(title),
+        children: [
+          if (sorted.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('Nessuna linea disponibile.'),
+            )
+          else
+            SizedBox(
+              width: 500,
+              height: (sorted.length * 56.0).clamp(56.0, 400.0),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: sorted.length,
+                itemBuilder: (context, index) {
+                  final line = sorted[index];
+                  return SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, line),
+                    child: Text('${line.code} · ${line.name}'),
+                  );
+                },
+              ),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annulla'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportSnapshot() async {
+    final mode = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Cosa vuoi esportare?'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'all'),
+            child: const Text('Backup completo · tutte le linee e gli avvisi'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'line'),
+            child: const Text('Una singola linea'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annulla'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || mode == null) return;
+    TransitLine? selectedLine;
+    if (mode == 'line') {
+      selectedLine = await _chooseLine(
+        widget.store.lines,
+        title: 'Scegli la linea da esportare',
+      );
+      if (!mounted || selectedLine == null) return;
+    }
+    final selectedLines = selectedLine == null
+        ? widget.store.lines
+        : <TransitLine>[selectedLine];
+    final selectedAlerts = selectedLine == null
+        ? widget.store.alerts
+        : <ServiceAlert>[];
     final json = const JsonEncoder.withIndent('  ').convert({
       'exportedAt': DateTime.now().toIso8601String(),
-      'lines': widget.store.lines.map((line) => line.toJson()).toList(),
-      'alerts': widget.store.alerts.map((alert) => alert.toJson()).toList(),
+      'lines': selectedLines.map((line) => line.toJson()).toList(),
+      'alerts': selectedAlerts.map((alert) => alert.toJson()).toList(),
     });
     final uri = Uri.dataFromString(
       json,
       mimeType: 'application/json',
       encoding: utf8,
     );
+    final filenamePart = selectedLine == null
+        ? 'completo'
+        : 'linea-${selectedLine.code.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}';
     final anchor = web.document.createElement('a') as web.HTMLAnchorElement
       ..href = uri.toString()
       ..download =
-          'jivaio-backup-${DateTime.now().toIso8601String().substring(0, 10)}.json';
+          'jivaio-backup-$filenamePart-${DateTime.now().toIso8601String().substring(0, 10)}.json';
     web.document.body?.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -363,12 +442,62 @@ class _AdminPageState extends State<AdminPage> {
       }
 
       if (!mounted) return;
+      final mode = await showDialog<String>(
+        context: context,
+        builder: (context) => SimpleDialog(
+          title: const Text('Cosa vuoi importare?'),
+          children: [
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, 'all'),
+              child: Text(
+                'Tutto il contenuto · ${importedLines.length} linee e ${importedAlerts.length} avvisi',
+              ),
+            ),
+            if (importedLines.isNotEmpty)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(context, 'line'),
+                child: const Text('Una singola linea dal file'),
+              ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annulla'),
+            ),
+          ],
+        ),
+      );
+      if (mode == null || !mounted) return;
+      TransitLine? selectedLine;
+      if (mode == 'line') {
+        selectedLine = await _chooseLine(
+          importedLines,
+          title: 'Scegli la linea da importare',
+        );
+        if (!mounted || selectedLine == null) return;
+      }
+      final linesToImport = selectedLine == null
+          ? importedLines
+          : <TransitLine>[selectedLine];
+      final alertsToImport = selectedLine == null
+          ? importedAlerts
+          : <ServiceAlert>[];
+      final existingLineIds = widget.store.lines.map((line) => line.id).toSet();
+      final existingAlertIds = widget.store.alerts
+          .map((alert) => alert.id)
+          .toSet();
+      final matchingLines = linesToImport
+          .where((line) => existingLineIds.contains(line.id))
+          .length;
+      final matchingAlerts = alertsToImport
+          .where((alert) => existingAlertIds.contains(alert.id))
+          .length;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Importare il backup?'),
           content: Text(
-            'Il file contiene ${importedLines.length} linee e ${importedAlerts.length} avvisi. I record con lo stesso ID saranno aggiornati dal backup; gli altri dati di questo browser e i preferiti resteranno.',
+            selectedLine == null
+                ? 'Importi ${linesToImport.length} linee e ${alertsToImport.length} avvisi. Verranno sostituiti $matchingLines linee e $matchingAlerts avvisi già presenti con lo stesso ID. Gli altri dati e i preferiti resteranno.'
+                : 'Importi la linea ${selectedLine.code} · ${selectedLine.name}. ${matchingLines > 0 ? 'La linea esistente con lo stesso ID sarà sostituita.' : 'La linea verrà aggiunta.'} Le altre linee, gli avvisi e i preferiti resteranno.',
           ),
           actions: [
             TextButton(
@@ -385,8 +514,8 @@ class _AdminPageState extends State<AdminPage> {
       );
       if (confirmed != true || !mounted) return;
       widget.store.importBackup(
-        importedLines: importedLines,
-        importedAlerts: importedAlerts,
+        importedLines: linesToImport,
+        importedAlerts: alertsToImport,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
