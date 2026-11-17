@@ -8,6 +8,7 @@ Nuova app Flutter Web autonoma per consultare le linee del trasporto pubblico de
 - Supabase Auth per l'accesso dell'amministratore.
 - PostgreSQL su Supabase per linee, fermate, corse, orari e avvisi.
 - Supabase Realtime per aggiornare gli avvisi pubblicati nei browser aperti.
+- Consultazione pubblica senza registrazione; le policy RLS consentono la lettura anonima dei soli dati pubblicati.
 
 Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza da controllare prima della pubblicazione. Le credenziali cloud saranno fornite in locale o nell'ambiente di hosting; non vanno committate.
 
@@ -34,6 +35,15 @@ Gli avvisi inseriti a mano si aggiornano subito nel sito. Posizione dei mezzi e 
 
 ```sh
 flutter pub get
+flutter run -d web-server --web-port=8765 --web-hostname=127.0.0.1 \
+  --dart-define=JIVAIO_LOCAL_ADMIN_PREVIEW=true
+```
+
+Apri `http://127.0.0.1:8765/#/admin` per usare il gestionale di anteprima. In questa modalità le modifiche sono salvate soltanto nel `localStorage` del browser corrente. Il bypass di accesso è disponibile solo in debug e non funziona nelle build di produzione. Gli utenti pubblici non devono registrarsi.
+
+Per avviare la versione collegata a Supabase:
+
+```sh
 flutter run -d chrome \
   --dart-define=SUPABASE_URL='https://YOUR-PROJECT.supabase.co' \
   --dart-define=SUPABASE_PUBLISHABLE_KEY='YOUR-PUBLISHABLE-KEY'

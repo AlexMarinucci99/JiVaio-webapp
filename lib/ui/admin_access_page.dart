@@ -127,6 +127,13 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (SupabaseConfig.localAdminPreviewEnabled) {
+      return AdminPage(
+        store: widget.store,
+        onSignOut: () => Navigator.of(context).pushReplacementNamed('/'),
+      );
+    }
+
     if (!SupabaseConfig.isConfigured || !SupabaseConfig.isInitialized) {
       return _AccessScaffold(
         child: _AccessMessage(

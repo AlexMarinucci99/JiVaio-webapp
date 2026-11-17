@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 class SupabaseConfig {
   SupabaseConfig._();
@@ -7,6 +8,11 @@ class SupabaseConfig {
   static const publishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
   );
+  static const _localAdminPreviewRequested = bool.fromEnvironment(
+    'JIVAIO_LOCAL_ADMIN_PREVIEW',
+  );
+  static bool get localAdminPreviewEnabled =>
+      kDebugMode && _localAdminPreviewRequested;
   static bool get isConfigured => url.isNotEmpty && publishableKey.isNotEmpty;
 
   static bool isInitialized = false;
