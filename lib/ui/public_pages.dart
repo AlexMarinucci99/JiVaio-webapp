@@ -560,30 +560,27 @@ class _LineDetailPageState extends State<LineDetailPage> {
                           children: [
                             TabBar(isScrollable: true, tabs: tabs),
                             const SizedBox(height: 18),
-                            SizedBox(
-                              height: 680,
-                              child: TabBarView(
-                                children: directions
-                                    .map(
-                                      (direction) => _DirectionDetail(
-                                        key: ValueKey(direction.id),
-                                        direction: direction,
-                                        line: line,
-                                        isCircular: line.isCircular,
-                                        initialTripIndex:
-                                            _selectedTrips.value[direction
-                                                .id] ??
-                                            0,
-                                        onTripSelected: (index) {
-                                          _selectedTrips.value = {
-                                            ..._selectedTrips.value,
-                                            direction.id: index,
-                                          };
-                                        },
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
+                            AnimatedBuilder(
+                              animation: DefaultTabController.of(context),
+                              builder: (context, _) {
+                                final direction =
+                                    directions[DefaultTabController.of(context)
+                                        .index];
+                                return _DirectionDetail(
+                                  key: ValueKey(direction.id),
+                                  direction: direction,
+                                  line: line,
+                                  isCircular: line.isCircular,
+                                  initialTripIndex:
+                                      _selectedTrips.value[direction.id] ?? 0,
+                                  onTripSelected: (index) {
+                                    _selectedTrips.value = {
+                                      ..._selectedTrips.value,
+                                      direction.id: index,
+                                    };
+                                  },
+                                );
+                              },
                             ),
                           ],
                         );
@@ -675,8 +672,8 @@ class _DirectionDetailState extends State<_DirectionDetail> {
         ? null
         : trips[_selectedTripIndex.clamp(0, trips.length - 1).toInt()];
     final stops = selectedTrip?.stops ?? direction.stops;
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
           child: Padding(

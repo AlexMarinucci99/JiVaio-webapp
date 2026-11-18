@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../data/jivaio_store.dart';
@@ -194,28 +196,66 @@ class _MobileNavigation extends StatelessWidget {
           '/alerts' => 2,
           _ => 0,
         };
-        return NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: (i) =>
-              Navigator.of(context)
-                  .pushReplacementNamed(['/', '/lines', '/alerts'][i]),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
+        const labels = ['Home', 'Linee', 'Avvisi'];
+        const routes = ['/', '/lines', '/alerts'];
+        const icons = [
+          Icons.home_outlined,
+          Icons.directions_bus_outlined,
+          Icons.campaign_outlined,
+        ];
+        return SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .90),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(color: JivaioColors.border),
+                ),
+                padding: const EdgeInsets.all(6),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < labels.length; i++)
+                      Expanded(
+                        child: Semantics(
+                          selected: i == index,
+                          child: TextButton(
+                            onPressed: () =>
+                                Navigator.of(context)
+                                    .pushReplacementNamed(routes[i]),
+                            style: TextButton.styleFrom(
+                              foregroundColor: i == index
+                                  ? JivaioColors.navy
+                                  : JivaioColors.secondary,
+                              backgroundColor: i == index
+                                  ? JivaioColors.blueLight
+                                  : Colors.transparent,
+                              minimumSize: const Size(48, 58),
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(icons[i], size: 22),
+                                const SizedBox(height: 3),
+                                Text(labels[i]),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
-            NavigationDestination(
-              icon: Icon(Icons.directions_bus_outlined),
-              selectedIcon: Icon(Icons.directions_bus),
-              label: 'Linee',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.campaign_outlined),
-              selectedIcon: Icon(Icons.campaign),
-              label: 'Avvisi',
-            ),
-          ],
+          ),
         );
       },
     );
