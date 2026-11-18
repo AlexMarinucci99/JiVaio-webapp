@@ -12,11 +12,22 @@ class HomeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundAssetPath = HomeHeroStyle.backgroundAssetPath;
     return Container(
       padding: HomeHeroStyle.padding,
       decoration: BoxDecoration(
         borderRadius: HomeHeroStyle.borderRadius,
-        gradient: HomeHeroStyle.gradient,
+        gradient: backgroundAssetPath == null ? HomeHeroStyle.gradient : null,
+        image: backgroundAssetPath == null
+            ? null
+            : DecorationImage(
+                image: AssetImage(backgroundAssetPath),
+                fit: HomeHeroStyle.backgroundFit,
+                colorFilter: const ColorFilter.mode(
+                  HomeHeroStyle.backgroundOverlayColor,
+                  BlendMode.srcOver,
+                ),
+              ),
         border: Border.all(color: HomeHeroStyle.borderColor),
       ),
       child: LayoutBuilder(
@@ -55,26 +66,7 @@ class HomeHero extends StatelessWidget {
             crossAxisAlignment: compact
                 ? CrossAxisAlignment.start
                 : CrossAxisAlignment.center,
-            children: [
-              if (compact) content else Expanded(child: content),
-              if (!compact) ...[
-                const SizedBox(width: HomeHeroStyle.wideArtworkSpacing),
-                Semantics(
-                  image: true,
-                  label: 'JiVaio sopra L’Aquila',
-                  child: ClipRRect(
-                    borderRadius: HomeHeroStyle.artworkBorderRadius,
-                    child: Image.asset(
-                      HomeHeroStyle.artworkAssetPath,
-                      key: const Key('home-hero-artwork'),
-                      width: HomeHeroStyle.artworkWidth,
-                      height: HomeHeroStyle.artworkHeight,
-                      fit: HomeHeroStyle.artworkFit,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+            children: [if (compact) content else Expanded(child: content)],
           );
         },
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Valori locali del banner home e della sua illustrazione.
+/// Valori locali del banner home.
 abstract final class HomeHeroStyle {
   static const padding = EdgeInsets.all(30);
   static const borderRadius = BorderRadius.all(Radius.circular(26));
@@ -17,11 +17,8 @@ abstract final class HomeHeroStyle {
   static const descriptionFontSize = 17.0;
   static const descriptionSpacing = 12.0;
   static const actionSpacing = 22.0;
-  static const wideArtworkSpacing = 30.0;
-
-  static const artworkWidth = 270.0;
-  static const artworkHeight = 180.0;
-  static const artworkAssetPath = 'assets/images/home_hero.jpg';
-  static const artworkFit = BoxFit.cover;
-  static const artworkBorderRadius = BorderRadius.all(Radius.circular(22));
+  // Inserisci qui il percorso dell'immagine dopo averla dichiarata in pubspec.yaml.
+  static const String? backgroundAssetPath = null;
+  static const backgroundFit = BoxFit.cover;
+  static const backgroundOverlayColor = Color(0xBFEAF2FF);
 }
