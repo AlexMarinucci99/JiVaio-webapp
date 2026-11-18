@@ -1338,7 +1338,7 @@ const _serviceOptions = [
   ('1', 'Feriale (lun–ven)'),
   ('2', 'Sabato'),
   ('FESTIVO', 'Festivo'),
-  ('NIGHT_THSAT', 'Notturno (gio e sab)'),
+  ('NIGHT_THSAT', 'Notti gio–ven e sab–dom'),
 ];
 
 class _DirectionForm extends StatelessWidget {

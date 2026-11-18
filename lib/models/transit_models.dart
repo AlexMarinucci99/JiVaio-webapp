@@ -368,7 +368,7 @@ String transitServiceLabel(String serviceId) => switch (serviceId) {
   '1' => 'Feriale (lun–ven)',
   '2' => 'Sabato',
   'FESTIVO' => 'Festivo',
-  'NIGHT_THSAT' => 'Notturno (gio e sab)',
+  'NIGHT_THSAT' => 'Notti gio–ven e sab–dom',
   '' => 'Orari generali',
   _ => 'Calendario $serviceId',
 };
