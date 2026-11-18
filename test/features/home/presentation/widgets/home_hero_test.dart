@@ -45,6 +45,7 @@ void main() {
     expect(find.text(HomeHeroContent.title), findsOneWidget);
     expect(find.text(HomeHeroContent.description), findsOneWidget);
     expect(find.text(HomeHeroContent.buttonLabel), findsOneWidget);
+    expect(find.byType(Icon), findsNothing);
 
     await tester.tap(find.text(HomeHeroContent.buttonLabel));
     expect(openedLines, isTrue);

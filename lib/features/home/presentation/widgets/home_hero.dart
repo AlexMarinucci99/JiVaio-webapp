@@ -42,10 +42,9 @@ class HomeHero extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: HomeHeroStyle.actionSpacing),
-              FilledButton.icon(
+              FilledButton(
                 onPressed: onOpenLines,
-                icon: const Icon(Icons.directions_bus_outlined),
-                label: const Text(HomeHeroContent.buttonLabel),
+                child: const Text(HomeHeroContent.buttonLabel),
               ),
             ],
           );

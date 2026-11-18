@@ -4,10 +4,16 @@ import '../data/jivaio_store.dart';
 import '../theme/jivaio_theme.dart';
 
 class PublicScaffold extends StatelessWidget {
-  const PublicScaffold({required this.store, required this.child, super.key});
+  const PublicScaffold({
+    required this.store,
+    required this.child,
+    this.showBrandMark = true,
+    super.key,
+  });
 
   final JivaioStore store;
   final Widget child;
+  final bool showBrandMark;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +24,7 @@ class PublicScaffold extends StatelessWidget {
         bottom: false,
         child: Column(
           children: [
-            _TopNavigation(selected: selected),
+            _TopNavigation(selected: selected, showBrandMark: showBrandMark),
             AnimatedBuilder(
               animation: store,
               builder: (context, _) => store.loadError == null
@@ -43,8 +49,9 @@ class PublicScaffold extends StatelessWidget {
 }
 
 class _TopNavigation extends StatelessWidget {
-  const _TopNavigation({required this.selected});
+  const _TopNavigation({required this.selected, required this.showBrandMark});
   final String selected;
+  final bool showBrandMark;
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +70,10 @@ class _TopNavigation extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const BrandMark(size: 34),
-                  const SizedBox(width: 10),
+                  if (showBrandMark) ...[
+                    const BrandMark(size: 34),
+                    const SizedBox(width: 10),
+                  ],
                   Text(
                     'JiVaio',
                     style: Theme.of(context).textTheme.titleLarge
@@ -97,8 +106,10 @@ class _TopNavigation extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const BrandMark(),
-                    const SizedBox(width: 12),
+                    if (showBrandMark) ...[
+                      const BrandMark(),
+                      const SizedBox(width: 12),
+                    ],
                     Text(
                       'JiVaio',
                       style: Theme.of(context).textTheme.titleLarge

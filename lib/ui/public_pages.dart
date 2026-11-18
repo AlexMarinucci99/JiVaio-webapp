@@ -14,6 +14,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return PublicScaffold(
       store: store,
+      showBrandMark: false,
       child: AnimatedBuilder(
         animation: store,
         builder: (context, _) => PageFrame(
