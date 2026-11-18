@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
 abstract final class JivaioColors {
-  static const page = Color(0xFFF4F7FC);
+  // Palette principale: superficie chiara, blu scuro e blu d'accento.
+  // Gli altri neutri sono sfumature della stessa palette.
+  static const page = Color(0xFFF5F7FA);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceBlue = Color(0xFFEAF2FF);
-  static const navy = Color(0xFF191970);
-  static const blue = Color(0xFF0754C5);
-  static const blueLight = Color(0xFFE6F0FF);
-  static const text = Color(0xFF111827);
-  static const secondary = Color(0xFF5D6675);
-  static const muted = Color(0xFF858FA0);
-  static const border = Color(0xFFDCE5F2);
+  static const navy = Color(0xFF182C45);
+  static const blue = Color(0xFF285D9B);
+  static const blueLight = Color(0xFFEAF0F7);
+  static const surfaceBlue = blueLight;
+  static const text = navy;
+  static const secondary = Color(0xFF4C5D70);
+  static const muted = Color(0xFF68798A);
+  static const border = Color(0xFFD9E1E9);
+  // Colori semantici riservati ad avvisi, errori e conferme.
   static const warning = Color(0xFFE69A13);
   static const danger = Color(0xFFD94747);
   static const success = Color(0xFF208661);
@@ -31,12 +34,40 @@ ThemeData buildJivaioTheme() {
     scaffoldBackgroundColor: JivaioColors.page,
     fontFamily: 'Roboto',
     textTheme: const TextTheme(
-      headlineMedium: TextStyle(fontSize: 34, height: 1.12, fontWeight: FontWeight.w800, color: JivaioColors.navy),
-      headlineSmall: TextStyle(fontSize: 27, height: 1.16, fontWeight: FontWeight.w800, color: JivaioColors.navy),
-      titleLarge: TextStyle(fontSize: 21, height: 1.2, fontWeight: FontWeight.w800, color: JivaioColors.navy),
-      titleMedium: TextStyle(fontSize: 17, height: 1.25, fontWeight: FontWeight.w700, color: JivaioColors.navy),
-      bodyLarge: TextStyle(fontSize: 16, height: 1.45, color: JivaioColors.text),
-      bodyMedium: TextStyle(fontSize: 14, height: 1.45, color: JivaioColors.secondary),
+      headlineMedium: TextStyle(
+        fontSize: 34,
+        height: 1.12,
+        fontWeight: FontWeight.w800,
+        color: JivaioColors.navy,
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 27,
+        height: 1.16,
+        fontWeight: FontWeight.w800,
+        color: JivaioColors.navy,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 21,
+        height: 1.2,
+        fontWeight: FontWeight.w800,
+        color: JivaioColors.navy,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 17,
+        height: 1.25,
+        fontWeight: FontWeight.w700,
+        color: JivaioColors.navy,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        height: 1.45,
+        color: JivaioColors.text,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        height: 1.45,
+        color: JivaioColors.secondary,
+      ),
       labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -85,6 +116,10 @@ ThemeData buildJivaioTheme() {
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
     ),
-    dividerTheme: const DividerThemeData(color: JivaioColors.border, thickness: 1, space: 1),
+    dividerTheme: const DividerThemeData(
+      color: JivaioColors.border,
+      thickness: 1,
+      space: 1,
+    ),
   );
 }

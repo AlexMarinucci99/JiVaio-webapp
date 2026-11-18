@@ -57,6 +57,8 @@ Se la porta `8765` è già occupata, usa il server già attivo o chiudilo prima 
 
 Per esempio, puoi aprire `lib/theme/jivaio_theme.dart`, cambiare il valore esadecimale di `JivaioColors.blue`, salvare e applicare il reload.
 
+La palette principale usa superfici chiare, blu scuro per i testi e blu per azioni e selezioni. Bordi e testi secondari sono sfumature della stessa palette; avvisi ed errori mantengono colori dedicati per essere riconoscibili. Le immagini possono naturalmente contenere altri colori.
+
 ## Modificare il banner principale
 
 - I testi del banner (titolo, descrizione e pulsante) sono in `lib/features/home/presentation/home_hero_content.dart`.

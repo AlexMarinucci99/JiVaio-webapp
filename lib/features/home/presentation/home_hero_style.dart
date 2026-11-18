@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/jivaio_theme.dart';
+
 /// Valori locali del banner home.
 abstract final class HomeHeroStyle {
   static const padding = EdgeInsets.all(30);
@@ -7,9 +9,9 @@ abstract final class HomeHeroStyle {
   static const gradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFEAF2FF), Color(0xFFDCEAFF)],
+    colors: [JivaioColors.surfaceBlue, JivaioColors.blueLight],
   );
-  static const borderColor = Color(0xFFD5E4F9);
+  static const borderColor = JivaioColors.border;
 
   static const breakpoint = 640.0;
   static const compactTitleFontSize = 34.0;
@@ -20,5 +22,5 @@ abstract final class HomeHeroStyle {
   // Inserisci qui il percorso dell'immagine dopo averla dichiarata in pubspec.yaml.
   static const String? backgroundAssetPath = null;
   static const backgroundFit = BoxFit.cover;
-  static const backgroundOverlayColor = Color(0xBFEAF2FF);
+  static const backgroundOverlayColor = Color(0xBFEAF0F7);
 }
