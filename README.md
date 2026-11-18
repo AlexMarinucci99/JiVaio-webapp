@@ -40,6 +40,8 @@ Gli avvisi inseriti a mano si aggiornano subito nel sito. Posizione dei mezzi e 
 
 ## Avvio locale
 
+Per una guida passo passo a VS Code, al reload e alla simulazione smartphone, vedi [Modificare la UI in VS Code](docs/guida-ui-vscode.md).
+
 ```sh
 flutter pub get
 flutter run -d web-server --web-port=8765 --web-hostname=127.0.0.1 \
