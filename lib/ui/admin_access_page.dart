@@ -33,6 +33,7 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
     if (SupabaseConfig.isInitialized) {
       final client = Supabase.instance.client;
       _authSubscription = client.auth.onAuthStateChange.listen((event) {
+        if (event.event == AuthChangeEvent.tokenRefreshed && _isAdmin) return;
         unawaited(_checkSession(event.session));
       });
       unawaited(_checkSession(client.auth.currentSession));

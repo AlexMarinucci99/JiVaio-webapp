@@ -770,6 +770,7 @@ class _LineEditorState extends State<_LineEditor> {
   late final List<_DirectionFields> _directions;
   late bool _isCircular;
   bool _isSaving = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -879,7 +880,7 @@ class _LineEditorState extends State<_LineEditor> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isSaving ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -1036,6 +1037,14 @@ class _LineEditorState extends State<_LineEditor> {
                 ],
               ),
             ),
+            if (_saveError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Text(
+                  _saveError!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -1043,7 +1052,7 @@ class _LineEditorState extends State<_LineEditor> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isSaving ? null : () => Navigator.pop(context),
                     child: const Text('Annulla'),
                   ),
                   const SizedBox(width: 8),
@@ -1082,20 +1091,19 @@ class _LineEditorState extends State<_LineEditor> {
       isCircular: _isCircular || _requiresCircular(_code.text),
       isVisible: widget.line?.isVisible ?? true,
     );
-    setState(() => _isSaving = true);
+    setState(() {
+      _isSaving = true;
+      _saveError = null;
+    });
     try {
       await widget.onSave(line);
       if (mounted) Navigator.pop(context);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              error is CloudConflict
-                  ? 'Dati modificati in un altro browser. Le modifiche restano aperte: copiale, annulla e riapri la linea.'
-                  : 'Salvataggio non riuscito. Le modifiche restano aperte; riprova.',
-            ),
-          ),
+        setState(
+          () => _saveError = error is CloudConflict
+              ? 'Dati modificati in un altro browser. Copia le tue modifiche, annulla e riapri la linea.'
+              : 'Salvataggio non riuscito. Le modifiche restano aperte; riprova.',
         );
       }
     } finally {
@@ -1923,6 +1931,7 @@ class _AlertEditorState extends State<_AlertEditor> {
   late String _severity;
   late bool _published;
   bool _isSaving = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -1971,7 +1980,7 @@ class _AlertEditorState extends State<_AlertEditor> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isSaving ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -2074,6 +2083,14 @@ class _AlertEditorState extends State<_AlertEditor> {
                 ],
               ),
             ),
+            if (_saveError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Text(
+                  _saveError!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -2081,7 +2098,7 @@ class _AlertEditorState extends State<_AlertEditor> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isSaving ? null : () => Navigator.pop(context),
                     child: const Text('Annulla'),
                   ),
                   const SizedBox(width: 8),
@@ -2137,20 +2154,19 @@ class _AlertEditorState extends State<_AlertEditor> {
           .toList(),
       isPublished: _published,
     );
-    setState(() => _isSaving = true);
+    setState(() {
+      _isSaving = true;
+      _saveError = null;
+    });
     try {
       await widget.onSave(alert);
       if (mounted) Navigator.pop(context);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              error is CloudConflict
-                  ? 'Avviso modificato in un altro browser. Copia le modifiche, annulla e riapri l’avviso.'
-                  : 'Salvataggio non riuscito. Le modifiche restano aperte; riprova.',
-            ),
-          ),
+        setState(
+          () => _saveError = error is CloudConflict
+              ? 'Avviso modificato in un altro browser. Copia le tue modifiche, annulla e riapri l’avviso.'
+              : 'Salvataggio non riuscito. Le modifiche restano aperte; riprova.',
         );
       }
     } finally {
