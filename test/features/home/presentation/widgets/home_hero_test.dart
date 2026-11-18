@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:master_lines/features/home/presentation/home_hero_content.dart';
-import 'package:master_lines/features/home/presentation/widgets/hero_artwork.dart';
+import 'package:master_lines/features/home/presentation/home_hero_style.dart';
 import 'package:master_lines/features/home/presentation/widgets/home_hero.dart';
 import 'package:master_lines/theme/jivaio_theme.dart';
 
@@ -60,7 +60,6 @@ void main() {
     );
 
     expect(layout.direction, Axis.vertical);
-    expect(find.byType(HeroArtwork), findsNothing);
   });
 
   testWidgets('mostra illustrazione e layout orizzontale su desktop', (
@@ -73,6 +72,16 @@ void main() {
     );
 
     expect(layout.direction, Axis.horizontal);
-    expect(find.byType(HeroArtwork), findsOneWidget);
+    final artwork = tester.widget<Image>(
+      find.byKey(const Key('home-hero-artwork')),
+    );
+
+    expect(
+      (artwork.image as AssetImage).assetName,
+      HomeHeroStyle.artworkAssetPath,
+    );
+    expect(artwork.width, HomeHeroStyle.artworkWidth);
+    expect(artwork.height, HomeHeroStyle.artworkHeight);
+    expect(artwork.fit, BoxFit.cover);
   });
 }

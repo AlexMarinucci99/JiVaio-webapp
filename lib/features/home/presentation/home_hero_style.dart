@@ -21,30 +21,7 @@ abstract final class HomeHeroStyle {
 
   static const artworkWidth = 270.0;
   static const artworkHeight = 180.0;
-  static const artworkBackgroundOpacity = .72;
+  static const artworkAssetPath = 'assets/images/home_hero.jpg';
+  static const artworkFit = BoxFit.cover;
   static const artworkBorderRadius = BorderRadius.all(Radius.circular(22));
-  static const artworkBorderColor = Colors.white;
-
-  static const routeAccentColor = Color(0xFF8BB5F3);
-  static const routeIconSize = 48.0;
-  static const routeIconTop = 28.0;
-  static const routeIconLeft = 28.0;
-
-  static const busCardWidth = 138.0;
-  static const busCardHeight = 72.0;
-  static const busCardBorderRadius = BorderRadius.all(Radius.circular(18));
-  static const busCardBottom = 30.0;
-  static const busCardRight = 30.0;
-  static const busIconSize = 50.0;
-
-  static const markerIconSize = 24.0;
-  static const startMarkerLeft = 60.0;
-  static const startMarkerBottom = 60.0;
-  static const endMarkerRight = 52.0;
-  static const endMarkerTop = 43.0;
-
-  static const routeLineLeft = 91.0;
-  static const routeLineTop = 64.0;
-  static const routeLineWidth = 100.0;
-  static const routeLineHeight = 2.0;
 }

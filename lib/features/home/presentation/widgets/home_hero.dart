@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../theme/jivaio_theme.dart';
 import '../home_hero_content.dart';
 import '../home_hero_style.dart';
-import 'hero_artwork.dart';
 
 /// Banner principale della homepage con un'azione fornita dalla pagina ospite.
 class HomeHero extends StatelessWidget {
@@ -61,7 +60,20 @@ class HomeHero extends StatelessWidget {
               if (compact) content else Expanded(child: content),
               if (!compact) ...[
                 const SizedBox(width: HomeHeroStyle.wideArtworkSpacing),
-                const HeroArtwork(),
+                Semantics(
+                  image: true,
+                  label: 'JiVaio sopra L’Aquila',
+                  child: ClipRRect(
+                    borderRadius: HomeHeroStyle.artworkBorderRadius,
+                    child: Image.asset(
+                      HomeHeroStyle.artworkAssetPath,
+                      key: const Key('home-hero-artwork'),
+                      width: HomeHeroStyle.artworkWidth,
+                      height: HomeHeroStyle.artworkHeight,
+                      fit: HomeHeroStyle.artworkFit,
+                    ),
+                  ),
+                ),
               ],
             ],
           );

@@ -62,7 +62,7 @@ Per esempio, puoi aprire `lib/theme/jivaio_theme.dart`, cambiare il valore esade
 - I testi del banner (titolo, descrizione e pulsante) sono in `lib/features/home/presentation/home_hero_content.dart`.
 - Colori locali, gradiente, bordo, raggi, breakpoint responsive, dimensioni e spaziature sono in `lib/features/home/presentation/home_hero_style.dart`. I colori condivisi arrivano da `lib/theme/jivaio_theme.dart`.
 - La composizione del banner e gli stili tipografici basati sul tema sono in `lib/features/home/presentation/widgets/home_hero.dart`.
-- L’illustrazione è composta da forme e icone Material in `lib/features/home/presentation/widgets/hero_artwork.dart`; qui puoi cambiare icone e disposizione. Il banner attuale non usa un file immagine.
+- L’immagine mostrata a destra è `assets/images/home_hero.jpg`; percorso, dimensioni e ritaglio sono configurati in `lib/features/home/presentation/home_hero_style.dart`. Per sostituirla, aggiungi il nuovo asset in `assets/images/`, dichiaralo in `pubspec.yaml` e aggiorna `artworkAssetPath`. `BoxFit.cover` riempie il riquadro mantenendo le proporzioni e ritagliando le parti esterne.
 - La navigazione del pulsante è collegata in `lib/ui/public_pages.dart`, nella chiamata a `HomeHero`.
 
 ## Controllare la vista smartphone
