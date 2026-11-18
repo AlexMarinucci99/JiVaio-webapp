@@ -26,18 +26,17 @@ Questa guida riguarda il progetto web separato da JiVaio Android. La cartella di
 Nel terminale di VS Code avvia:
 
 ```bash
-flutter run -d web-server --web-port=8765 --web-hostname=127.0.0.1 \
-  --dart-define=JIVAIO_LOCAL_ADMIN_PREVIEW=true
+flutter run -d web-server --web-port=8765 --web-hostname=127.0.0.1
 ```
 
 Aspetta che compaia `lib/main.dart is being served at http://127.0.0.1:8765`, poi apri:
 
 - Sito: `http://127.0.0.1:8765/`
-- Gestionale di anteprima: `http://127.0.0.1:8765/#/admin`
+- Gestionale: `http://127.0.0.1:8765/#/admin`
 
-Lascia aperto il terminale mentre lavori. Il parametro di anteprima consente l'accesso al gestionale in debug: mantieni il server sul computer locale e non usarlo come pubblicazione su Internet.
+Lascia aperto il terminale mentre lavori. Accedi al gestionale con l’account amministratore autorizzato su Supabase.
 
-Le modifiche ai dati sono salvate nel browser, non nei file del progetto né su Supabase. Per ritrovare i dati usa **lo stesso browser e lo stesso indirizzo**, incluso `127.0.0.1` e la porta `8765`: cambiare browser, usare `localhost` o cambiare porta può aprire un archivio separato. Fai periodicamente un backup dal gestionale prima di interventi importanti.
+Le modifiche salvate nel gestionale sono condivise tramite Supabase e compaiono anche negli altri browser, normalmente entro 20 secondi. I preferiti restano nel singolo browser. Continua a esportare periodicamente un backup dal gestionale prima di interventi importanti.
 
 ## Vedere una modifica
 
@@ -46,7 +45,7 @@ Le modifiche ai dati sono salvate nel browser, non nei file del progetto né su 
 3. Se un cambiamento non viene applicato con il reload, premi **R** maiuscola per il *hot restart* o ferma e riavvia Flutter, poi ricarica la pagina. Chiudi eventuali moduli solo dopo aver salvato: riavvii e ricariche possono perdere le modifiche non ancora salvate nei moduli.
 4. Per arrestare il server seleziona il suo terminale e premi **Ctrl+C**.
 
-Se la porta `8765` è già occupata, usa il server già attivo o chiudilo prima di avviarne un altro. Una porta diversa non condivide automaticamente il salvataggio del browser.
+Se la porta `8765` è già occupata, usa il server già attivo o chiudilo prima di avviarne un altro. Una porta diversa usa gli stessi dati Supabase, ma richiede eventualmente un nuovo accesso e conserva preferiti separati.
 
 ## Dove modificare la grafica
 
@@ -62,4 +61,4 @@ Per esempio, puoi aprire `lib/theme/jivaio_theme.dart`, cambiare il valore esade
 
 Nel browser Chrome sul computer apri gli strumenti sviluppatore con **Ctrl+Shift+I**, poi attiva o disattiva la barra dei dispositivi con **Ctrl+Shift+M** e scegli una dimensione per telefono. Questa è una simulazione: controlla anche la pagina su un telefono reale quando disponibile.
 
-L'indirizzo `127.0.0.1` sul telefono indica il telefono stesso, non il computer. Per una prova esterna puoi aprire l'anteprima [GitHub Pages](https://alexmarinucci99.github.io/Master-Lines/), sapendo che ha i dati storici della repo e non condivide automaticamente le modifiche del gestionale locale.
+L'indirizzo `127.0.0.1` sul telefono indica il telefono stesso, non il computer. Per una prova esterna puoi aprire l'anteprima [GitHub Pages](https://alexmarinucci99.github.io/Master-Lines/), verificando prima che la versione pubblicata sia stata aggiornata con il nuovo collegamento a Supabase.

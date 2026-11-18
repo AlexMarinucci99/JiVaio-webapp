@@ -51,6 +51,8 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
     final version = ++_checkVersion;
     if (!mounted) return;
     if (session == null) {
+      widget.store.clearCloudSession();
+      unawaited(widget.store.refreshCloud());
       setState(() {
         _isAdmin = false;
         _isChecking = false;
@@ -75,6 +77,8 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
         await Supabase.instance.client.auth.signOut();
         return;
       }
+      await widget.store.refreshCloud(throwOnError: true);
+      if (!mounted || version != _checkVersion) return;
       setState(() {
         _isAdmin = true;
         _isChecking = false;

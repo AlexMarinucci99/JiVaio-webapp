@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
 
 import '../data/jivaio_store.dart';
+import '../data/cloud_transit_repository.dart';
 import '../models/transit_models.dart';
 import '../theme/jivaio_theme.dart';
 import 'jivaio_app.dart';
@@ -45,7 +46,9 @@ class _AdminPageState extends State<AdminPage> {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          'Modifica i dati di anteprima dal browser.',
+                          widget.store.usesCloud
+                              ? 'Modifica i dati condivisi tra i dispositivi.'
+                              : 'Modifica i dati di anteprima dal browser.',
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ],
@@ -74,7 +77,7 @@ class _AdminPageState extends State<AdminPage> {
                 ],
               ),
               const SizedBox(height: 18),
-              const _AdminNotice(),
+              _AdminNotice(usesCloud: widget.store.usesCloud),
               const SizedBox(height: 20),
               SegmentedButton<int>(
                 segments: const [
@@ -148,9 +151,7 @@ class _AdminPageState extends State<AdminPage> {
                     line: lines[i],
                     onEdit: () => _editLine(lines[i]),
                     onDelete: () => _deleteLine(lines[i]),
-                    onToggleVisibility: () => widget.store.saveLine(
-                      lines[i].copyWith(isVisible: !lines[i].isVisible),
-                    ),
+                    onToggleVisibility: () => _toggleVisibility(lines[i]),
                   ),
                   if (i != lines.length - 1) const Divider(height: 1),
                 ],
@@ -210,37 +211,95 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   Future<void> _editLine([TransitLine? line]) async {
-    final result = await showDialog<TransitLine>(
+    final revision = line == null ? null : widget.store.lineRevision(line.id);
+    await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _LineEditor(line: line),
+      builder: (_) => _LineEditor(
+        line: line,
+        onSave: (result) => widget.store.saveLine(
+          result,
+          expectedRevision: revision,
+          useSnapshot: true,
+        ),
+      ),
     );
-    if (result != null) widget.store.saveLine(result);
   }
 
   Future<void> _editAlert([ServiceAlert? alert]) async {
-    final result = await showDialog<ServiceAlert>(
+    final revision = alert == null
+        ? null
+        : widget.store.alertRevision(alert.id);
+    await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _AlertEditor(alert: alert),
+      builder: (_) => _AlertEditor(
+        alert: alert,
+        onSave: (result) => widget.store.saveAlert(
+          result,
+          expectedRevision: revision,
+          useSnapshot: true,
+        ),
+      ),
     );
-    if (result != null) widget.store.saveAlert(result);
+  }
+
+  Future<void> _runAction(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error) {
+      if (!mounted) return;
+      final message = error is CloudConflict
+          ? error.toString()
+          : 'Operazione non riuscita. Controlla la connessione e riprova.';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<void> _toggleVisibility(TransitLine line) async {
+    final revision = widget.store.lineRevision(line.id);
+    await _runAction(
+      () => widget.store.saveLine(
+        line.copyWith(isVisible: !line.isVisible),
+        expectedRevision: revision,
+        useSnapshot: true,
+      ),
+    );
   }
 
   Future<void> _deleteLine(TransitLine line) async {
+    final revision = widget.store.lineRevision(line.id);
     final confirmed = await _confirm(
       'Eliminare la linea ${line.code}?',
-      'La rimozione vale solo per questa anteprima nel browser.',
+      'La linea sarà rimossa dai dati condivisi.',
     );
-    if (confirmed) widget.store.removeLine(line.id);
+    if (confirmed) {
+      await _runAction(
+        () => widget.store.removeLine(
+          line.id,
+          expectedRevision: revision,
+          useSnapshot: true,
+        ),
+      );
+    }
   }
 
   Future<void> _deleteAlert(ServiceAlert alert) async {
+    final revision = widget.store.alertRevision(alert.id);
     final confirmed = await _confirm(
       'Eliminare questo avviso?',
-      'La rimozione vale solo per questa anteprima nel browser.',
+      'L’avviso sarà rimosso dai dati condivisi.',
     );
-    if (confirmed) widget.store.removeAlert(alert.id);
+    if (confirmed) {
+      await _runAction(
+        () => widget.store.removeAlert(
+          alert.id,
+          expectedRevision: revision,
+          useSnapshot: true,
+        ),
+      );
+    }
   }
 
   Future<bool> _confirm(String title, String message) async =>
@@ -471,6 +530,16 @@ class _AdminPageState extends State<AdminPage> {
       final matchingAlerts = alertsToImport
           .where((alert) => existingAlertIds.contains(alert.id))
           .length;
+      final lineRevisions = <String, int>{
+        for (final line in linesToImport)
+          if (widget.store.lineRevision(line.id) case final int revision)
+            line.id: revision,
+      };
+      final alertRevisions = <String, int>{
+        for (final alert in alertsToImport)
+          if (widget.store.alertRevision(alert.id) case final int revision)
+            alert.id: revision,
+      };
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -494,13 +563,18 @@ class _AdminPageState extends State<AdminPage> {
         ),
       );
       if (confirmed != true || !mounted) return;
-      widget.store.importBackup(
+      await widget.store.importBackup(
         importedLines: linesToImport,
         importedAlerts: alertsToImport,
+        expectedLineRevisions: lineRevisions,
+        expectedAlertRevisions: alertRevisions,
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Backup importato e unito ai dati locali.'),
+        SnackBar(
+          content: Text(
+            widget.store.loadError == null ? 'Backup importato correttamente.' : 'Backup importato, ma non riesco ad aggiornare la schermata. Riprova.',
+          ),
         ),
       );
     } catch (error) {
@@ -513,7 +587,8 @@ class _AdminPageState extends State<AdminPage> {
 }
 
 class _AdminNotice extends StatelessWidget {
-  const _AdminNotice();
+  const _AdminNotice({required this.usesCloud});
+  final bool usesCloud;
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(15),
@@ -522,15 +597,17 @@ class _AdminNotice extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: const Color(0xFFF2DDAE)),
     ),
-    child: const Row(
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.phonelink_outlined, color: Color(0xFF95620B)),
-        SizedBox(width: 11),
+        const Icon(Icons.phonelink_outlined, color: Color(0xFF95620B)),
+        const SizedBox(width: 11),
         Expanded(
           child: Text(
-            'Modalità anteprima: le modifiche sono salvate solo in questo browser. Usa Esporta backup e Importa backup per trasferirle tra browser. Il database condiviso verrà collegato in una fase successiva.',
-            style: TextStyle(color: Color(0xFF755214), height: 1.45),
+            usesCloud
+                ? 'Le modifiche salvate sono condivise tra i browser. Esporta periodicamente un backup.'
+                : 'Modalità anteprima: le modifiche sono salvate solo in questo browser.',
+            style: const TextStyle(color: Color(0xFF755214), height: 1.45),
           ),
         ),
       ],
@@ -678,8 +755,9 @@ class _AlertAdminRow extends StatelessWidget {
 }
 
 class _LineEditor extends StatefulWidget {
-  const _LineEditor({this.line});
+  const _LineEditor({this.line, required this.onSave});
   final TransitLine? line;
+  final Future<void> Function(TransitLine) onSave;
   @override
   State<_LineEditor> createState() => _LineEditorState();
 }
@@ -691,6 +769,7 @@ class _LineEditorState extends State<_LineEditor> {
   late final TextEditingController _stopCount;
   late final List<_DirectionFields> _directions;
   late bool _isCircular;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -969,7 +1048,7 @@ class _LineEditorState extends State<_LineEditor> {
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed: _save,
+                    onPressed: _isSaving ? null : _save,
                     icon: const Icon(Icons.save_outlined),
                     label: const Text('Salva linea'),
                   ),
@@ -982,8 +1061,8 @@ class _LineEditorState extends State<_LineEditor> {
     ),
   );
 
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _save() async {
+    if (_isSaving || !_formKey.currentState!.validate()) return;
     final now = DateTime.now();
     final line = TransitLine(
       id: widget.line?.id ?? 'manual-${now.microsecondsSinceEpoch}',
@@ -1003,7 +1082,25 @@ class _LineEditorState extends State<_LineEditor> {
       isCircular: _isCircular || _requiresCircular(_code.text),
       isVisible: widget.line?.isVisible ?? true,
     );
-    Navigator.pop(context, line);
+    setState(() => _isSaving = true);
+    try {
+      await widget.onSave(line);
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is CloudConflict
+                  ? 'Dati modificati in un altro browser. Le modifiche restano aperte: copiale, annulla e riapri la linea.'
+                  : 'Salvataggio non riuscito. Le modifiche restano aperte; riprova.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   String _directionDisplayLabel(int index) {
@@ -1806,8 +1903,9 @@ String? _validateStopRows(String? value) {
 }
 
 class _AlertEditor extends StatefulWidget {
-  const _AlertEditor({this.alert});
+  const _AlertEditor({this.alert, required this.onSave});
   final ServiceAlert? alert;
+  final Future<void> Function(ServiceAlert) onSave;
   @override
   State<_AlertEditor> createState() => _AlertEditorState();
 }
@@ -1824,6 +1922,7 @@ class _AlertEditorState extends State<_AlertEditor> {
   DateTime? _endsAt;
   late String _severity;
   late bool _published;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -1987,7 +2086,7 @@ class _AlertEditorState extends State<_AlertEditor> {
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed: _save,
+                    onPressed: _isSaving ? null : _save,
                     icon: const Icon(Icons.save_outlined),
                     label: const Text('Salva avviso'),
                   ),
@@ -2018,31 +2117,45 @@ class _AlertEditorState extends State<_AlertEditor> {
     });
   }
 
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _save() async {
+    if (_isSaving || !_formKey.currentState!.validate()) return;
     final now = DateTime.now();
-    Navigator.pop(
-      context,
-      ServiceAlert(
-        id: widget.alert?.id ?? 'manual-alert-${now.microsecondsSinceEpoch}',
-        title: _title.text.trim(),
-        summary: _summary.text.trim(),
-        details: _details.text.trim(),
-        severity: _severity,
-        startsAt: _startsAt,
-        endsAt: _endsAt,
-        sourceName: _source.text.trim().isEmpty ? null : _source.text.trim(),
-        sourceUrl: _sourceUrl.text.trim().isEmpty
-            ? null
-            : _sourceUrl.text.trim(),
-        affectedLines: _lines.text
-            .split(',')
-            .map((value) => value.trim())
-            .where((value) => value.isNotEmpty)
-            .toList(),
-        isPublished: _published,
-      ),
+    final alert = ServiceAlert(
+      id: widget.alert?.id ?? 'manual-alert-${now.microsecondsSinceEpoch}',
+      title: _title.text.trim(),
+      summary: _summary.text.trim(),
+      details: _details.text.trim(),
+      severity: _severity,
+      startsAt: _startsAt,
+      endsAt: _endsAt,
+      sourceName: _source.text.trim().isEmpty ? null : _source.text.trim(),
+      sourceUrl: _sourceUrl.text.trim().isEmpty ? null : _sourceUrl.text.trim(),
+      affectedLines: _lines.text
+          .split(',')
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(),
+      isPublished: _published,
     );
+    setState(() => _isSaving = true);
+    try {
+      await widget.onSave(alert);
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is CloudConflict
+                  ? 'Avviso modificato in un altro browser. Copia le modifiche, annulla e riapri l’avviso.'
+                  : 'Salvataggio non riuscito. Le modifiche restano aperte; riprova.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 }
 

@@ -4,11 +4,7 @@ import '../data/jivaio_store.dart';
 import '../theme/jivaio_theme.dart';
 
 class PublicScaffold extends StatelessWidget {
-  const PublicScaffold({
-    required this.store,
-    required this.child,
-    super.key,
-  });
+  const PublicScaffold({required this.store, required this.child, super.key});
 
   final JivaioStore store;
   final Widget child;
@@ -23,6 +19,20 @@ class PublicScaffold extends StatelessWidget {
         child: Column(
           children: [
             _TopNavigation(selected: selected),
+            AnimatedBuilder(
+              animation: store,
+              builder: (context, _) => store.loadError == null
+                  ? const SizedBox.shrink()
+                  : MaterialBanner(
+                      content: Text(store.loadError!),
+                      actions: [
+                        TextButton(
+                          onPressed: () => store.refreshCloud(),
+                          child: const Text('Riprova'),
+                        ),
+                      ],
+                    ),
+            ),
             Expanded(child: child),
           ],
         ),
@@ -38,61 +48,95 @@ class _TopNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth < 650) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Container(
-            height: 54,
-            padding: const EdgeInsets.symmetric(horizontal: 13),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(17),
-              border: Border.all(color: JivaioColors.border),
-            ),
-            child: Row(children: [
-              const BrandMark(size: 34),
-              const SizedBox(width: 10),
-              Text('JiVaio', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 21)),
-            ]),
-          ),
-        );
-      }
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1320),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 650) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Container(
-              height: 68,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              height: 54,
+              padding: const EdgeInsets.symmetric(horizontal: 13),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .93),
-                borderRadius: BorderRadius.circular(22),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(17),
                 border: Border.all(color: JivaioColors.border),
-                boxShadow: const [BoxShadow(color: Color(0x101B3B6B), blurRadius: 18, offset: Offset(0, 7))],
               ),
               child: Row(
                 children: [
-                  const BrandMark(),
-                  const SizedBox(width: 12),
-                  Text('JiVaio', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 25)),
-                  const Spacer(),
-                  _NavLink(label: 'Home', route: '/', selected: selected == '/'),
-                  _NavLink(label: 'Linee', route: '/lines', selected: selected == '/lines'),
-                  _NavLink(label: 'Avvisi', route: '/alerts', selected: selected == '/alerts'),
+                  const BrandMark(size: 34),
+                  const SizedBox(width: 10),
+                  Text(
+                    'JiVaio',
+                    style: Theme.of(context).textTheme.titleLarge
+                        ?.copyWith(fontSize: 21),
+                  ),
                 ],
               ),
             ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1320),
+              child: Container(
+                height: 68,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .93),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: JivaioColors.border),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x101B3B6B),
+                      blurRadius: 18,
+                      offset: Offset(0, 7),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const BrandMark(),
+                    const SizedBox(width: 12),
+                    Text(
+                      'JiVaio',
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontSize: 25),
+                    ),
+                    const Spacer(),
+                    _NavLink(
+                      label: 'Home',
+                      route: '/',
+                      selected: selected == '/',
+                    ),
+                    _NavLink(
+                      label: 'Linee',
+                      route: '/lines',
+                      selected: selected == '/lines',
+                    ),
+                    _NavLink(
+                      label: 'Avvisi',
+                      route: '/alerts',
+                      selected: selected == '/alerts',
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
 class _NavLink extends StatelessWidget {
-  const _NavLink({required this.label, required this.route, required this.selected});
+  const _NavLink({
+    required this.label,
+    required this.route,
+    required this.selected,
+  });
   final String label;
   final String route;
   final bool selected;
@@ -104,11 +148,18 @@ class _NavLink extends StatelessWidget {
       child: TextButton(
         onPressed: () => Navigator.of(context).pushReplacementNamed(route),
         style: TextButton.styleFrom(
-          foregroundColor: selected ? JivaioColors.navy : JivaioColors.secondary,
-          backgroundColor: selected ? JivaioColors.blueLight : Colors.transparent,
+          foregroundColor: selected
+              ? JivaioColors.navy
+              : JivaioColors.secondary,
+          backgroundColor: selected
+              ? JivaioColors.blueLight
+              : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 13),
           shape: const StadiumBorder(),
-          textStyle: TextStyle(fontWeight: selected ? FontWeight.w800 : FontWeight.w700, fontSize: 15),
+          textStyle: TextStyle(
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+            fontSize: 15,
+          ),
         ),
         child: Text(label),
       ),
@@ -122,23 +173,41 @@ class _MobileNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      if (MediaQuery.sizeOf(context).width >= 650) return const SizedBox.shrink();
-      final index = switch (selected) {
-        '/lines' => 1,
-        '/alerts' => 2,
-        _ => 0,
-      };
-      return NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (i) => Navigator.of(context).pushReplacementNamed(['/','/lines','/alerts'][i]),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.directions_bus_outlined), selectedIcon: Icon(Icons.directions_bus), label: 'Linee'),
-          NavigationDestination(icon: Icon(Icons.campaign_outlined), selectedIcon: Icon(Icons.campaign), label: 'Avvisi'),
-        ],
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (MediaQuery.sizeOf(context).width >= 650) {
+          return const SizedBox.shrink();
+        }
+        final index = switch (selected) {
+          '/lines' => 1,
+          '/alerts' => 2,
+          _ => 0,
+        };
+        return NavigationBar(
+          selectedIndex: index,
+          onDestinationSelected: (i) =>
+              Navigator.of(context)
+                  .pushReplacementNamed(['/', '/lines', '/alerts'][i]),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.directions_bus_outlined),
+              selectedIcon: Icon(Icons.directions_bus),
+              label: 'Linee',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.campaign_outlined),
+              selectedIcon: Icon(Icons.campaign),
+              label: 'Avvisi',
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -151,14 +220,26 @@ class BrandMark extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: JivaioColors.blue, borderRadius: BorderRadius.circular(size * .28)),
-      child: Icon(Icons.directions_bus_rounded, color: Colors.white, size: size * .62),
+      decoration: BoxDecoration(
+        color: JivaioColors.blue,
+        borderRadius: BorderRadius.circular(size * .28),
+      ),
+      child: Icon(
+        Icons.directions_bus_rounded,
+        color: Colors.white,
+        size: size * .62,
+      ),
     );
   }
 }
 
 class PageFrame extends StatelessWidget {
-  const PageFrame({required this.child, super.key, this.width = 1320, this.padding = const EdgeInsets.fromLTRB(24, 28, 24, 52)});
+  const PageFrame({
+    required this.child,
+    super.key,
+    this.width = 1320,
+    this.padding = const EdgeInsets.fromLTRB(24, 28, 24, 52),
+  });
   final Widget child;
   final double width;
   final EdgeInsetsGeometry padding;
@@ -178,7 +259,12 @@ class PageFrame extends StatelessWidget {
 }
 
 class PageHeading extends StatelessWidget {
-  const PageHeading({required this.title, required this.subtitle, super.key, this.trailing});
+  const PageHeading({
+    required this.title,
+    required this.subtitle,
+    super.key,
+    this.trailing,
+  });
   final String title;
   final String subtitle;
   final Widget? trailing;
@@ -194,11 +280,18 @@ class PageHeading extends StatelessWidget {
       children: [
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 780),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 6),
-            Text(subtitle, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: JivaioColors.secondary)),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(color: JivaioColors.secondary),
+              ),
+            ],
+          ),
         ),
         ?trailing,
       ],
@@ -207,18 +300,37 @@ class PageHeading extends StatelessWidget {
 }
 
 class PreviewNotice extends StatelessWidget {
-  const PreviewNotice({super.key});
+  const PreviewNotice({required this.store, super.key});
+  final JivaioStore store;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(color: const Color(0xFFFFF7E8), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFF2DDAE))),
-      child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(Icons.info_outline, size: 19, color: Color(0xFF95620B)),
-        SizedBox(width: 9),
-        Expanded(child: Text('Dati di anteprima: gli orari locali provengono da un archivio precedente e vanno aggiornati prima della pubblicazione.', style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF755214)))),
-      ]),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7E8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF2DDAE)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, size: 19, color: Color(0xFF95620B)),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              store.usesCloud
+                  ? 'Orari in aggiornamento: verifica eventuali variazioni sui canali ufficiali AMA.'
+                  : 'Dati di anteprima: gli orari locali provengono da un archivio precedente e vanno aggiornati prima della pubblicazione.',
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: Color(0xFF755214),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

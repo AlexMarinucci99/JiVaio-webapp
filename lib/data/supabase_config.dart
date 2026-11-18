@@ -4,15 +4,19 @@ import 'package:flutter/foundation.dart';
 class SupabaseConfig {
   SupabaseConfig._();
 
-  static const url = String.fromEnvironment('SUPABASE_URL');
+  static const url = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://lilkvangfedtkzwqmgzs.supabase.co',
+  );
   static const publishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
+    defaultValue: 'sb_publishable_v8GDClT_w57s5IwivbkqNQ_D1u3damt',
   );
   static const _localAdminPreviewRequested = bool.fromEnvironment(
     'JIVAIO_LOCAL_ADMIN_PREVIEW',
   );
   static bool get localAdminPreviewEnabled =>
-      kDebugMode && _localAdminPreviewRequested;
+      kDebugMode && _localAdminPreviewRequested && !isConfigured;
   static bool get isConfigured => url.isNotEmpty && publishableKey.isNotEmpty;
 
   static bool isInitialized = false;

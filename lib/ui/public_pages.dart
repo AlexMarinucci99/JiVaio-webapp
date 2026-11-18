@@ -19,7 +19,7 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const PreviewNotice(),
+              PreviewNotice(store: store),
               const SizedBox(height: 28),
               _HomeHero(
                 onOpenLines: () => Navigator.of(context).pushNamed('/lines'),
@@ -267,7 +267,7 @@ class _LinesPageState extends State<LinesPage> {
                   subtitle: 'Consulta le linee disponibili e apri il dettaglio completo.',
                 ),
                 const SizedBox(height: 24),
-                const PreviewNotice(),
+                PreviewNotice(store: widget.store),
                 const SizedBox(height: 18),
                 _LineFilters(
                   controller: _search,
@@ -606,7 +606,7 @@ class _LineDetailPageState extends State<LineDetailPage> {
                     label: const Text('Torna alle linee'),
                   ),
                   const SizedBox(height: 12),
-                  const PreviewNotice(),
+                  PreviewNotice(store: widget.store),
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -944,7 +944,7 @@ class AlertsPage extends StatelessWidget {
                 subtitle: 'Aggiornamenti e variazioni del servizio pubblicati da JiVaio.',
               ),
               const SizedBox(height: 22),
-              const PreviewNotice(),
+              PreviewNotice(store: store),
               const SizedBox(height: 20),
               if (store.visibleAlerts.isEmpty)
                 const _EmptyState(
