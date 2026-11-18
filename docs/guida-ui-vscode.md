@@ -57,6 +57,14 @@ Se la porta `8765` è già occupata, usa il server già attivo o chiudilo prima 
 
 Per esempio, puoi aprire `lib/theme/jivaio_theme.dart`, cambiare il valore esadecimale di `JivaioColors.blue`, salvare e applicare il reload.
 
+## Modificare il banner principale
+
+- I testi del banner (titolo, descrizione e pulsante) sono in `lib/features/home/presentation/home_hero_content.dart`.
+- Colori locali, gradiente, bordo, raggi, breakpoint responsive, dimensioni e spaziature sono in `lib/features/home/presentation/home_hero_style.dart`. I colori condivisi arrivano da `lib/theme/jivaio_theme.dart`.
+- La composizione del banner e gli stili tipografici basati sul tema sono in `lib/features/home/presentation/widgets/home_hero.dart`.
+- L’illustrazione è composta da forme e icone Material in `lib/features/home/presentation/widgets/hero_artwork.dart`; qui puoi cambiare icone e disposizione. Il banner attuale non usa un file immagine.
+- La navigazione del pulsante è collegata in `lib/ui/public_pages.dart`, nella chiamata a `HomeHero`.
+
 ## Controllare la vista smartphone
 
 Nel browser Chrome sul computer apri gli strumenti sviluppatore con **Ctrl+Shift+I**, poi attiva o disattiva la barra dei dispositivi con **Ctrl+Shift+M** e scegli una dimensione per telefono. Questa è una simulazione: controlla anche la pagina su un telefono reale quando disponibile.

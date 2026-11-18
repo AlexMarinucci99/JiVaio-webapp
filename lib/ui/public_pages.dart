@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/jivaio_store.dart';
+import '../features/home/presentation/widgets/home_hero.dart';
 import '../models/transit_models.dart';
 import '../theme/jivaio_theme.dart';
 import 'jivaio_app.dart';
@@ -21,7 +22,7 @@ class HomePage extends StatelessWidget {
             children: [
               PreviewNotice(store: store),
               const SizedBox(height: 28),
-              _HomeHero(
+              HomeHero(
                 onOpenLines: () => Navigator.of(context).pushNamed('/lines'),
               ),
               const SizedBox(height: 28),
@@ -64,143 +65,6 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _HomeHero extends StatelessWidget {
-  const _HomeHero({required this.onOpenLines});
-  final VoidCallback onOpenLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFEAF2FF), Color(0xFFDCEAFF)],
-        ),
-        border: Border.all(color: const Color(0xFFD5E4F9)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 640;
-          return Flex(
-            direction: compact ? Axis.vertical : Axis.horizontal,
-            crossAxisAlignment: compact
-                ? CrossAxisAlignment.start
-                : CrossAxisAlignment.center,
-            children: [
-              ExpandedIfWide(
-                wide: !compact,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Muoviti meglio\ncon JiVaio',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(fontSize: compact ? 34 : 42),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Consulta linee, orari e avvisi del trasporto pubblico a L’Aquila.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontSize: 17,
-                        color: JivaioColors.secondary,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    FilledButton.icon(
-                      onPressed: onOpenLines,
-                      icon: const Icon(Icons.directions_bus_outlined),
-                      label: const Text('Consulta le linee'),
-                    ),
-                  ],
-                ),
-              ),
-              if (!compact) const SizedBox(width: 30),
-              if (!compact) const _HeroArtwork(),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class ExpandedIfWide extends StatelessWidget {
-  const ExpandedIfWide({required this.wide, required this.child, super.key});
-  final bool wide;
-  final Widget child;
-  @override
-  Widget build(BuildContext context) => wide ? Expanded(child: child) : child;
-}
-
-class _HeroArtwork extends StatelessWidget {
-  const _HeroArtwork();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 270,
-      height: 180,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .72),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Positioned(
-            top: 28,
-            left: 28,
-            child: Icon(
-              Icons.route_outlined,
-              color: Color(0xFF8BB5F3),
-              size: 48,
-            ),
-          ),
-          Positioned(
-            bottom: 30,
-            right: 30,
-            child: Container(
-              width: 138,
-              height: 72,
-              decoration: BoxDecoration(
-                color: JivaioColors.blue,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(
-                Icons.directions_bus_rounded,
-                color: Colors.white,
-                size: 50,
-              ),
-            ),
-          ),
-          const Positioned(
-            left: 60,
-            bottom: 60,
-            child: Icon(Icons.location_on, color: JivaioColors.navy, size: 24),
-          ),
-          const Positioned(
-            right: 52,
-            top: 43,
-            child: Icon(Icons.location_on, color: JivaioColors.blue, size: 24),
-          ),
-          Positioned(
-            left: 91,
-            top: 64,
-            child: Container(
-              width: 100,
-              height: 2,
-              color: const Color(0xFF8BB5F3),
-            ),
-          ),
-        ],
       ),
     );
   }
