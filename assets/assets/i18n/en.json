@@ -244,5 +244,6 @@
   "warning": "service change",
   "info": "information",
   "Parte da {value}": "Departs from {value}",
-  "Navetta Notturna": "Night shuttle"
+  "Navetta Notturna": "Night shuttle",
+  "Linea circolare / ad anello": "Circular / loop route"
 }
