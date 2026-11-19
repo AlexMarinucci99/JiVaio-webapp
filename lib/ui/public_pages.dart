@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/jivaio_store.dart';
 import '../features/home/presentation/widgets/home_hero.dart';
 import '../models/transit_models.dart';
+import '../services/upcoming_departures.dart';
 import '../theme/jivaio_theme.dart';
 import 'jivaio_app.dart';
 
@@ -236,13 +239,60 @@ class _LineFilters extends StatelessWidget {
   }
 }
 
-class _LineGrid extends StatelessWidget {
+class _LineGrid extends StatefulWidget {
   const _LineGrid({required this.pairs, required this.store});
   final List<_LineDirectionPair> pairs;
   final JivaioStore store;
 
   @override
+  State<_LineGrid> createState() => _LineGridState();
+}
+
+class _LineGridState extends State<_LineGrid> with WidgetsBindingObserver {
+  Timer? _clockTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleClockUpdate();
+  }
+
+  void _scheduleClockUpdate() {
+    _clockTimer?.cancel();
+    final now = DateTime.now();
+    final remaining =
+        const Duration(minutes: 1) -
+        Duration(
+          seconds: now.second,
+          milliseconds: now.millisecond,
+          microseconds: now.microsecond,
+        );
+    _clockTimer = Timer(remaining, () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleClockUpdate();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {});
+      _scheduleClockUpdate();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clockTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 1000 ? 2 : 1;
@@ -253,10 +303,10 @@ class _LineGrid extends StatelessWidget {
           spacing: 18,
           runSpacing: 18,
           children: [
-            for (final pair in pairs)
+            for (final pair in widget.pairs)
               SizedBox(
                 width: width,
-                child: _LineCard(pair: pair, store: store),
+                child: _LineCard(pair: pair, store: widget.store, now: now),
               ),
           ],
         );
@@ -266,15 +316,18 @@ class _LineGrid extends StatelessWidget {
 }
 
 class _LineCard extends StatelessWidget {
-  const _LineCard({required this.pair, required this.store});
+  const _LineCard({required this.pair, required this.store, required this.now});
   final _LineDirectionPair pair;
   final JivaioStore store;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
     final line = pair.line;
     final direction = pair.direction;
     final directionIndex = _publicDirections(line).indexOf(direction);
+    final matchingDirections = directionsForCard(line, direction);
+    final upcoming = upcomingDepartures(matchingDirections, now);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -331,11 +384,15 @@ class _LineCard extends StatelessWidget {
                         const SizedBox(height: 6),
                         _SmallPill(
                           icon: Icons.calendar_month_outlined,
-                          label: _directionServiceTitle(
-                            line,
-                            direction,
-                            directionIndex,
-                          ),
+                          label: line.isCircular
+                              ? _directionServiceTitle(
+                                  line,
+                                  direction,
+                                  directionIndex,
+                                )
+                              : matchingDirections.length > 1
+                              ? 'Calendari diversi'
+                              : direction.serviceLabel,
                         ),
                       ],
                     ],
@@ -373,23 +430,34 @@ class _LineCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            if (direction.departures.isEmpty)
-              const Text(
-                'Orari da aggiornare',
-                style: TextStyle(color: JivaioColors.secondary, fontSize: 14),
+            if (upcoming.departures.isEmpty)
+              Text(
+                switch (upcoming.emptyReason) {
+                  UpcomingEmptyReason.noTimes => 'Orari da aggiornare',
+                  UpcomingEmptyReason.calendarUnknown =>
+                    'Calendario da verificare',
+                  UpcomingEmptyReason.noneToday =>
+                    'Nessuna partenza prevista oggi',
+                },
+                style: const TextStyle(
+                  color: JivaioColors.secondary,
+                  fontSize: 14,
+                ),
               )
             else
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: direction.departures
-                    .take(4)
-                    .map(
-                      (time) => _TimePill(
-                        time: _departureLabel(line, direction, time),
+                children: [
+                  for (final departure in upcoming.departures)
+                    _TimePill(
+                      time: _departureLabel(
+                        line,
+                        departure.direction,
+                        departure.time,
                       ),
-                    )
-                    .toList(),
+                    ),
+                ],
               ),
             const SizedBox(height: 14),
             SizedBox(
@@ -1278,8 +1346,8 @@ bool _isLineAWeekday(TransitLine line, TransitDirection direction) =>
     (direction.serviceId == '1' || direction.serviceId.isEmpty);
 
 String _serviceTimeLabel(TransitDirection direction, String time) {
-  if (direction.serviceId != 'NIGHT_THSAT') return time;
-  final match = RegExp(r'^(\d{1,2}):([0-5]\d)$').firstMatch(time.trim());
+  final match = RegExp(r'^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?$')
+      .firstMatch(time.trim());
   if (match == null) return time;
   final hour = int.parse(match.group(1)!);
   if (hour < 24 || hour > 47) return time;
