@@ -243,5 +243,6 @@
   "critical": "важное",
   "warning": "изменение движения",
   "info": "информация",
-  "Parte da {value}": "Отправление от {value}"
+  "Parte da {value}": "Отправление от {value}",
+  "Navetta Notturna": "Ночной шаттл"
 }

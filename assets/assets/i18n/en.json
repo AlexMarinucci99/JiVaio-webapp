@@ -243,5 +243,6 @@
   "critical": "critical",
   "warning": "service change",
   "info": "information",
-  "Parte da {value}": "Departs from {value}"
+  "Parte da {value}": "Departs from {value}",
+  "Navetta Notturna": "Night shuttle"
 }
