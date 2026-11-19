@@ -57,6 +57,16 @@ Se la porta `8765` è già occupata, usa il server già attivo o chiudilo prima 
 
 Per esempio, puoi aprire `lib/theme/jivaio_theme.dart`, cambiare il valore esadecimale di `JivaioColors.blue`, salvare e applicare il reload.
 
+La palette principale usa superfici chiare, blu scuro per i testi e blu per azioni e selezioni. Bordi e testi secondari sono sfumature della stessa palette; avvisi ed errori mantengono colori dedicati per essere riconoscibili. Le immagini possono naturalmente contenere altri colori.
+
+## Modificare il banner principale
+
+- I testi del banner (titolo, descrizione e pulsante) sono in `lib/features/home/presentation/home_hero_content.dart`.
+- Colori locali, gradiente, bordo, raggi, breakpoint responsive, dimensioni e spaziature sono in `lib/features/home/presentation/home_hero_style.dart`. I colori condivisi arrivano da `lib/theme/jivaio_theme.dart`.
+- La composizione del banner e gli stili tipografici basati sul tema sono in `lib/features/home/presentation/widgets/home_hero.dart`.
+- Per aggiungere uno sfondo all'intero banner, salva l'immagine in `assets/images/` (per esempio `sfondo.jpg`), aggiungi `- assets/images/sfondo.jpg` sotto `flutter: assets:` in `pubspec.yaml` e sostituisci `null` con `'assets/images/sfondo.jpg'` in `backgroundAssetPath` in `lib/features/home/presentation/home_hero_style.dart`. Esegui `flutter pub get` e riavvia Flutter. `BoxFit.cover` riempie il banner ritagliando le parti esterne; il filtro chiaro in `home_hero.dart` aiuta la leggibilità dei testi.
+- La navigazione del pulsante è collegata in `lib/ui/public_pages.dart`, nella chiamata a `HomeHero`.
+
 ## Controllare la vista smartphone
 
 Nel browser Chrome sul computer apri gli strumenti sviluppatore con **Ctrl+Shift+I**, poi attiva o disattiva la barra dei dispositivi con **Ctrl+Shift+M** e scegli una dimensione per telefono. Questa è una simulazione: controlla anche la pagina su un telefono reale quando disponibile.

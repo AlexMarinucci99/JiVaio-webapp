@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../i18n/app_language.dart';
@@ -6,21 +8,28 @@ import '../data/jivaio_store.dart';
 import '../theme/jivaio_theme.dart';
 
 class PublicScaffold extends StatelessWidget {
-  const PublicScaffold({required this.store, required this.child, super.key});
+  const PublicScaffold({
+    required this.store,
+    required this.child,
+    this.showBrandMark = true,
+    super.key,
+  });
 
   final JivaioStore store;
   final Widget child;
+  final bool showBrandMark;
 
   @override
   Widget build(BuildContext context) {
     final path = ModalRoute.of(context)?.settings.name ?? '/';
     final selected = path.startsWith('/line') ? '/lines' : path;
     return Scaffold(
+      extendBody: true,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            _TopNavigation(selected: selected),
+            _TopNavigation(selected: selected, showBrandMark: showBrandMark),
             AnimatedBuilder(
               animation: store,
               builder: (context, _) => store.loadError == null
@@ -45,8 +54,9 @@ class PublicScaffold extends StatelessWidget {
 }
 
 class _TopNavigation extends StatelessWidget {
-  const _TopNavigation({required this.selected});
+  const _TopNavigation({required this.selected, required this.showBrandMark});
   final String selected;
+  final bool showBrandMark;
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +76,10 @@ class _TopNavigation extends StatelessWidget {
               child: Row(
                 textDirection: TextDirection.ltr,
                 children: [
-                  const BrandMark(size: 34),
-                  const SizedBox(width: 10),
+                  if (showBrandMark) ...[
+                    const BrandMark(size: 34),
+                    const SizedBox(width: 10),
+                  ],
                   TText(
                     'JiVaio',
                     style: Theme.of(context).textTheme.titleLarge
@@ -102,8 +114,10 @@ class _TopNavigation extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const BrandMark(),
-                    const SizedBox(width: 12),
+                    if (showBrandMark) ...[
+                      const BrandMark(),
+                      const SizedBox(width: 12),
+                    ],
                     TText(
                       'JiVaio',
                       style: Theme.of(context).textTheme.titleLarge
@@ -190,28 +204,94 @@ class _MobileNavigation extends StatelessWidget {
           '/alerts' => 2,
           _ => 0,
         };
-        return NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: (i) =>
-              Navigator.of(context)
-                  .pushReplacementNamed(['/', '/lines', '/alerts'][i]),
-          destinations: [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: tr(context, 'Home'),
+        const labels = ['Home', 'Linee', 'Avvisi'];
+        const routes = ['/', '/lines', '/alerts'];
+        const icons = [
+          Icons.home_outlined,
+          Icons.directions_bus_outlined,
+          Icons.campaign_outlined,
+        ];
+        return SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14182C45),
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: JivaioColors.surface.withValues(alpha: .72),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: JivaioColors.surface.withValues(alpha: .90),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(3),
+                      child: Row(
+                        children: [
+                          for (var i = 0; i < labels.length; i++)
+                            Expanded(
+                              child: Semantics(
+                                selected: i == index,
+                                child: TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context)
+                                          .pushReplacementNamed(routes[i]),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: i == index
+                                        ? JivaioColors.navy
+                                        : JivaioColors.secondary,
+                                    backgroundColor: i == index
+                                        ? JivaioColors.blue.withValues(
+                                            alpha: .11,
+                                          )
+                                        : Colors.transparent,
+                                    minimumSize: const Size(48, 48),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 3,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(icons[i], size: 19),
+                                      const SizedBox(height: 1),
+                                      TText(labels[i], maxLines: 1),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            NavigationDestination(
-              icon: Icon(Icons.directions_bus_outlined),
-              selectedIcon: Icon(Icons.directions_bus),
-              label: tr(context, 'Linee'),
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.campaign_outlined),
-              selectedIcon: Icon(Icons.campaign),
-              label: tr(context, 'Avvisi'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -254,7 +334,11 @@ class PageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: padding,
+      // Scaffold.extendBody exposes the navigation bar height as bottom padding.
+      // Reserve it at the end so the final content remains reachable.
+      padding: padding.add(
+        EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: width),

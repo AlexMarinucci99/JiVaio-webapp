@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../i18n/app_language.dart';
 
 import '../data/jivaio_store.dart';
+import '../features/home/presentation/widgets/home_hero.dart';
 import '../models/transit_models.dart';
+import '../services/upcoming_departures.dart';
 import '../theme/jivaio_theme.dart';
 import 'jivaio_app.dart';
 
@@ -15,6 +19,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return PublicScaffold(
       store: store,
+      showBrandMark: false,
       child: AnimatedBuilder(
         animation: store,
         builder: (context, _) => PageFrame(
@@ -23,7 +28,7 @@ class HomePage extends StatelessWidget {
             children: [
               PreviewNotice(store: store),
               const SizedBox(height: 28),
-              _HomeHero(
+              HomeHero(
                 onOpenLines: () => Navigator.of(context).pushNamed('/lines'),
               ),
               const SizedBox(height: 28),
@@ -71,151 +76,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _HomeHero extends StatelessWidget {
-  const _HomeHero({required this.onOpenLines});
-  final VoidCallback onOpenLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFEAF2FF), Color(0xFFDCEAFF)],
-        ),
-        border: Border.all(color: const Color(0xFFD5E4F9)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 640;
-          return Flex(
-            direction: compact ? Axis.vertical : Axis.horizontal,
-            crossAxisAlignment: compact
-                ? CrossAxisAlignment.start
-                : CrossAxisAlignment.center,
-            children: [
-              ExpandedIfWide(
-                wide: !compact,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TText(
-                      'Muoviti meglio\ncon JiVaio',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            fontSize: compact
-                                ? switch (LanguageScope.of(context).code) {
-                                    'uk' || 'ru' => 27,
-                                    'ar' => 29,
-                                    _ => 34,
-                                  }
-                                : 42,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    TText(
-                      'Consulta linee, orari e avvisi del trasporto pubblico a L’Aquila.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontSize: 17,
-                        color: JivaioColors.secondary,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    FilledButton.icon(
-                      onPressed: onOpenLines,
-                      icon: const Icon(Icons.directions_bus_outlined),
-                      label: const TText('Consulta le linee'),
-                    ),
-                  ],
-                ),
-              ),
-              if (!compact) const SizedBox(width: 30),
-              if (!compact) const _HeroArtwork(),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class ExpandedIfWide extends StatelessWidget {
-  const ExpandedIfWide({required this.wide, required this.child, super.key});
-  final bool wide;
-  final Widget child;
-  @override
-  Widget build(BuildContext context) => wide ? Expanded(child: child) : child;
-}
-
-class _HeroArtwork extends StatelessWidget {
-  const _HeroArtwork();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 270,
-      height: 180,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .72),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Positioned(
-            top: 28,
-            left: 28,
-            child: Icon(
-              Icons.route_outlined,
-              color: Color(0xFF8BB5F3),
-              size: 48,
-            ),
-          ),
-          Positioned(
-            bottom: 30,
-            right: 30,
-            child: Container(
-              width: 138,
-              height: 72,
-              decoration: BoxDecoration(
-                color: JivaioColors.blue,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(
-                Icons.directions_bus_rounded,
-                color: Colors.white,
-                size: 50,
-              ),
-            ),
-          ),
-          const Positioned(
-            left: 60,
-            bottom: 60,
-            child: Icon(Icons.location_on, color: JivaioColors.navy, size: 24),
-          ),
-          const Positioned(
-            right: 52,
-            top: 43,
-            child: Icon(Icons.location_on, color: JivaioColors.blue, size: 24),
-          ),
-          Positioned(
-            left: 91,
-            top: 64,
-            child: Container(
-              width: 100,
-              height: 2,
-              color: const Color(0xFF8BB5F3),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class LinesPage extends StatefulWidget {
   const LinesPage({required this.store, super.key});
   final JivaioStore store;
@@ -253,6 +113,7 @@ class _LinesPageState extends State<LinesPage> {
   Widget build(BuildContext context) {
     return PublicScaffold(
       store: widget.store,
+      showBrandMark: false,
       child: AnimatedBuilder(
         animation: widget.store,
         builder: (context, _) {
@@ -384,13 +245,60 @@ class _LineFilters extends StatelessWidget {
   }
 }
 
-class _LineGrid extends StatelessWidget {
+class _LineGrid extends StatefulWidget {
   const _LineGrid({required this.pairs, required this.store});
   final List<_LineDirectionPair> pairs;
   final JivaioStore store;
 
   @override
+  State<_LineGrid> createState() => _LineGridState();
+}
+
+class _LineGridState extends State<_LineGrid> with WidgetsBindingObserver {
+  Timer? _clockTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleClockUpdate();
+  }
+
+  void _scheduleClockUpdate() {
+    _clockTimer?.cancel();
+    final now = DateTime.now();
+    final remaining =
+        const Duration(minutes: 1) -
+        Duration(
+          seconds: now.second,
+          milliseconds: now.millisecond,
+          microseconds: now.microsecond,
+        );
+    _clockTimer = Timer(remaining, () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleClockUpdate();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {});
+      _scheduleClockUpdate();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clockTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 1000 ? 2 : 1;
@@ -401,10 +309,10 @@ class _LineGrid extends StatelessWidget {
           spacing: 18,
           runSpacing: 18,
           children: [
-            for (final pair in pairs)
+            for (final pair in widget.pairs)
               SizedBox(
                 width: width,
-                child: _LineCard(pair: pair, store: store),
+                child: _LineCard(pair: pair, store: widget.store, now: now),
               ),
           ],
         );
@@ -413,16 +321,57 @@ class _LineGrid extends StatelessWidget {
   }
 }
 
+class _LineBadge extends StatelessWidget {
+  const _LineBadge({required this.code, required this.size});
+  final String code;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: JivaioColors.blue,
+      borderRadius: BorderRadius.circular(size * .29),
+    ),
+    child: code.trim().length > 6
+        ? const Icon(
+            Icons.directions_bus_rounded,
+            color: Colors.white,
+            size: 28,
+          )
+        : Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: TText(
+                code,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+  );
+}
+
 class _LineCard extends StatelessWidget {
-  const _LineCard({required this.pair, required this.store});
+  const _LineCard({required this.pair, required this.store, required this.now});
   final _LineDirectionPair pair;
   final JivaioStore store;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
     final line = pair.line;
     final direction = pair.direction;
     final directionIndex = _publicDirections(line).indexOf(direction);
+    final matchingDirections = directionsForCard(line, direction);
+    final upcoming = upcomingDepartures(matchingDirections, now);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -432,26 +381,7 @@ class _LineCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  constraints: const BoxConstraints(
-                    minWidth: 58,
-                    minHeight: 58,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 9),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: JivaioColors.blue,
-                    borderRadius: BorderRadius.circular(17),
-                  ),
-                  child: TText(
-                    line.code,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
+                _LineBadge(code: line.code, size: 58),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -463,11 +393,35 @@ class _LineCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 3),
-                      TText(
-                        'Linea ${line.code}',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      if (line.code.trim().length <= 6) ...[
+                        const SizedBox(height: 3),
+                        TText(
+                          'Linea ${line.code}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                      const SizedBox(height: 7),
+                      _SmallPill(
+                        icon: Icons.location_on,
+                        label:
+                            '${direction.stops.isEmpty ? line.stopCount : direction.stops.length} fermate',
                       ),
+                      if (direction.serviceLabel.isNotEmpty ||
+                          line.isCircular) ...[
+                        const SizedBox(height: 6),
+                        _SmallPill(
+                          icon: Icons.calendar_month_outlined,
+                          label: line.isCircular
+                              ? _directionServiceTitle(
+                                  line,
+                                  direction,
+                                  directionIndex,
+                                )
+                              : matchingDirections.length > 1
+                              ? 'Calendari diversi'
+                              : direction.serviceLabel,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -527,23 +481,34 @@ class _LineCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            if (direction.departures.isEmpty)
-              const TText(
-                'Orari da aggiornare',
-                style: TextStyle(color: JivaioColors.secondary, fontSize: 14),
+            if (upcoming.departures.isEmpty)
+              TText(
+                switch (upcoming.emptyReason) {
+                  UpcomingEmptyReason.noTimes => 'Orari da aggiornare',
+                  UpcomingEmptyReason.calendarUnknown =>
+                    'Calendario da verificare',
+                  UpcomingEmptyReason.noneToday =>
+                    'Nessuna partenza prevista oggi',
+                },
+                style: const TextStyle(
+                  color: JivaioColors.secondary,
+                  fontSize: 14,
+                ),
               )
             else
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: direction.departures
-                    .take(4)
-                    .map(
-                      (time) => _TimePill(
-                        time: _departureLabel(line, direction, time),
+                children: [
+                  for (final departure in upcoming.departures)
+                    _TimePill(
+                      time: _departureLabel(
+                        line,
+                        departure.direction,
+                        departure.time,
                       ),
-                    )
-                    .toList(),
+                    ),
+                ],
               ),
             const SizedBox(height: 14),
             SizedBox(
@@ -551,7 +516,9 @@ class _LineCard extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: () => Navigator.of(context).pushNamed(
                   '/line/${Uri.encodeComponent(line.id)}',
-                  arguments: direction.id,
+                  arguments: upcoming.departures.isEmpty
+                      ? direction.id
+                      : upcoming.departures.first.direction.id,
                 ),
                 icon: const Icon(Icons.open_in_new, size: 18),
                 label: const TText('Apri linea completa'),
@@ -629,23 +596,7 @@ class _LineDetailPageState extends State<LineDetailPage> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Container(
-                        width: 68,
-                        height: 68,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: JivaioColors.blue,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: TText(
-                          line.code,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 21,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
+                      _LineBadge(code: line.code, size: 68),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -656,9 +607,13 @@ class _LineDetailPageState extends State<LineDetailPage> {
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             TText(
-                              line.isCircular
-                                  ? 'Linea ${line.code} · circolare · ${line.stopCount} fermate'
-                                  : 'Linea ${line.code} · ${line.stopCount} fermate',
+                              line.code.trim().length > 6
+                                  ? (line.isCircular
+                                        ? 'Circolare · ${line.stopCount} fermate'
+                                        : '${line.stopCount} fermate')
+                                  : (line.isCircular
+                                        ? 'Linea ${line.code} · circolare · ${line.stopCount} fermate'
+                                        : 'Linea ${line.code} · ${line.stopCount} fermate'),
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
                             _SelectedTripNote(
@@ -717,30 +672,27 @@ class _LineDetailPageState extends State<LineDetailPage> {
                           children: [
                             TabBar(isScrollable: true, tabs: tabs),
                             const SizedBox(height: 18),
-                            SizedBox(
-                              height: 680,
-                              child: TabBarView(
-                                children: directions
-                                    .map(
-                                      (direction) => _DirectionDetail(
-                                        key: ValueKey(direction.id),
-                                        direction: direction,
-                                        line: line,
-                                        isCircular: line.isCircular,
-                                        initialTripIndex:
-                                            _selectedTrips.value[direction
-                                                .id] ??
-                                            0,
-                                        onTripSelected: (index) {
-                                          _selectedTrips.value = {
-                                            ..._selectedTrips.value,
-                                            direction.id: index,
-                                          };
-                                        },
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
+                            AnimatedBuilder(
+                              animation: DefaultTabController.of(context),
+                              builder: (context, _) {
+                                final direction =
+                                    directions[DefaultTabController.of(context)
+                                        .index];
+                                return _DirectionDetail(
+                                  key: ValueKey(direction.id),
+                                  direction: direction,
+                                  line: line,
+                                  isCircular: line.isCircular,
+                                  initialTripIndex:
+                                      _selectedTrips.value[direction.id] ?? 0,
+                                  onTripSelected: (index) {
+                                    _selectedTrips.value = {
+                                      ..._selectedTrips.value,
+                                      direction.id: index,
+                                    };
+                                  },
+                                );
+                              },
                             ),
                           ],
                         );
@@ -832,8 +784,8 @@ class _DirectionDetailState extends State<_DirectionDetail> {
         ? null
         : trips[_selectedTripIndex.clamp(0, trips.length - 1).toInt()];
     final stops = selectedTrip?.stops ?? direction.stops;
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
           child: Padding(
@@ -1440,8 +1392,8 @@ bool _isLineAWeekday(TransitLine line, TransitDirection direction) =>
     (direction.serviceId == '1' || direction.serviceId.isEmpty);
 
 String _serviceTimeLabel(TransitDirection direction, String time) {
-  if (direction.serviceId != 'NIGHT_THSAT') return time;
-  final match = RegExp(r'^(\d{1,2}):([0-5]\d)$').firstMatch(time.trim());
+  final match = RegExp(r'^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?$')
+      .firstMatch(time.trim());
   if (match == null) return time;
   final hour = int.parse(match.group(1)!);
   if (hour < 24 || hour > 47) return time;

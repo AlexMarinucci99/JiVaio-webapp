@@ -23,6 +23,7 @@ Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza 
 
 - Le pagine Home, Linee, Dettaglio, Avvisi e Gestionale sono realizzate in Flutter Web.
 - La schermata Linee legge i dati condivisi da Supabase. I vecchi file GTFS rimangono disponibili solo per la modalità locale esplicita.
+- Le prossime partenze usano l’ora di Roma e il calendario settimanale; si aggiornano ogni minuto e includono le corse notturne dopo mezzanotte riferite al giorno di servizio precedente. I calendari senza un tipo riconosciuto sono indicati come da verificare. Le festività infrasettimanali e le eccezioni scolastiche richiedono dati dedicati e non sono riconosciute automaticamente.
 - Il gestionale permette di modificare ogni partenza come una corsa autonoma, con fermate e orari intermedi specifici; una corsa può iniziare da una fermata diversa dalle altre.
 - Ogni corsa può avere una nota facoltativa, visibile nel dettaglio della linea quando si seleziona quella partenza e inclusa nei backup.
 - Gli orari intermedi possono essere contrassegnati come stimati: nel gestionale usa il selettore «Orario stimato» oppure `~` prima dell'orario; la pagina pubblica mostra la dicitura «stimato».
