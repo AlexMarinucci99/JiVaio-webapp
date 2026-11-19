@@ -22,6 +22,7 @@ class PublicScaffold extends StatelessWidget {
     final path = ModalRoute.of(context)?.settings.name ?? '/';
     final selected = path.startsWith('/line') ? '/lines' : path;
     return Scaffold(
+      extendBody: true,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -326,7 +327,11 @@ class PageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: padding,
+      // Scaffold.extendBody exposes the navigation bar height as bottom padding.
+      // Reserve it at the end so the final content remains reachable.
+      padding: padding.add(
+        EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: width),

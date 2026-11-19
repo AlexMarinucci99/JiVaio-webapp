@@ -111,6 +111,7 @@ class _LinesPageState extends State<LinesPage> {
   Widget build(BuildContext context) {
     return PublicScaffold(
       store: widget.store,
+      showBrandMark: false,
       child: AnimatedBuilder(
         animation: widget.store,
         builder: (context, _) {

@@ -45,6 +45,36 @@ class _JivaioRootState extends State<JivaioRoot> {
         ),
       );
     }
+    if (name == '/' || name == '/lines' || name == '/alerts') {
+      return PageRouteBuilder<void>(
+        settings: settings,
+        transitionDuration: const Duration(milliseconds: 240),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (context, animation, secondaryAnimation) => switch (name) {
+          '/lines' => LinesPage(store: _store),
+          '/alerts' => AlertsPage(store: _store),
+          _ => HomePage(store: _store),
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          if (MediaQuery.disableAnimationsOf(context)) return child;
+          final curve = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: curve,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, .012),
+                end: Offset.zero,
+              ).animate(curve),
+              child: child,
+            ),
+          );
+        },
+      );
+    }
     return MaterialPageRoute<void>(
       settings: settings,
       builder: (_) => switch (name) {
