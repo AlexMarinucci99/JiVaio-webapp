@@ -86,7 +86,6 @@ class LinesPage extends StatefulWidget {
 
 class _LinesPageState extends State<LinesPage> {
   late final TextEditingController _search = TextEditingController();
-  bool _savedOnly = false;
   bool _routeArgumentRead = false;
 
   @override
@@ -126,8 +125,7 @@ class _LinesPageState extends State<LinesPage> {
                 '${pair.line.code} ${pair.line.name} ${pair.direction.originName} ${pair.direction.destinationName}'
                     .toLowerCase()
                     .contains(query);
-            return matchesSearch &&
-                (!_savedOnly || widget.store.isFavorite(pair.line.id));
+            return matchesSearch;
           }).toList();
           return PageFrame(
             child: Column(
@@ -142,8 +140,6 @@ class _LinesPageState extends State<LinesPage> {
                 const SizedBox(height: 18),
                 _LineFilters(
                   controller: _search,
-                  savedOnly: _savedOnly,
-                  onSavedChanged: (value) => setState(() => _savedOnly = value),
                   onSearchChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 20),
@@ -156,12 +152,8 @@ class _LinesPageState extends State<LinesPage> {
                   ),
                 ] else if (pairs.isEmpty) ...[
                   _EmptyState(
-                    title: _savedOnly
-                        ? 'Nessuna linea salvata'
-                        : 'Nessuna linea trovata',
-                    subtitle: _savedOnly
-                        ? 'Tocca il cuore su una linea per ritrovarla qui.'
-                        : 'Prova a cambiare la ricerca.',
+                    title: 'Nessuna linea trovata',
+                    subtitle: 'Prova a cambiare la ricerca.',
                     icon: Icons.search_off,
                   ),
                 ] else ...[
@@ -184,65 +176,19 @@ class _LinesPageState extends State<LinesPage> {
 }
 
 class _LineFilters extends StatelessWidget {
-  const _LineFilters({
-    required this.controller,
-    required this.savedOnly,
-    required this.onSavedChanged,
-    required this.onSearchChanged,
-  });
+  const _LineFilters({required this.controller, required this.onSearchChanged});
   final TextEditingController controller;
-  final bool savedOnly;
-  final ValueChanged<bool> onSavedChanged;
   final ValueChanged<String> onSearchChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final search = TextField(
-          controller: controller,
-          onChanged: onSearchChanged,
-          decoration: InputDecoration(
-            prefixIcon: Icon(Icons.search),
-            hintText: tr(context, 'Cerca linea, fermata o destinazione'),
-          ),
-        );
-        final toggle = SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(
-              value: false,
-              label: TText('Tutte'),
-              icon: Icon(Icons.format_list_bulleted),
-            ),
-            ButtonSegment(
-              value: true,
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: TText('Salvate', maxLines: 1),
-              ),
-              icon: Icon(Icons.favorite_border),
-            ),
-          ],
-          selected: {savedOnly},
-          onSelectionChanged: (values) => onSavedChanged(values.first),
-          showSelectedIcon: false,
-        );
-        if (constraints.maxWidth < 760) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [search, const SizedBox(height: 12), toggle],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(child: search),
-            const SizedBox(width: 16),
-            toggle,
-          ],
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => TextField(
+    controller: controller,
+    onChanged: onSearchChanged,
+    decoration: InputDecoration(
+      prefixIcon: const Icon(Icons.search),
+      hintText: tr(context, 'Cerca linea, fermata o destinazione'),
+    ),
+  );
 }
 
 class _LineGrid extends StatefulWidget {
@@ -425,54 +371,16 @@ class _LineCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: tr(
-                    context,
-                    store.isFavorite(line.id)
-                        ? 'Rimuovi dai preferiti'
-                        : 'Salva linea',
-                  ),
-                  onPressed: () => store.toggleFavorite(line.id),
-                  icon: Icon(
-                    store.isFavorite(line.id)
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: store.isFavorite(line.id)
-                        ? JivaioColors.danger
-                        : JivaioColors.muted,
-                    size: 26,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _SmallPill(
-                  icon: Icons.location_on,
-                  label:
-                      '${direction.stops.isEmpty ? line.stopCount : direction.stops.length} fermate',
-                ),
-                if (direction.serviceLabel.isNotEmpty || line.isCircular)
-                  _SmallPill(
-                    icon: Icons.calendar_month_outlined,
-                    label: _directionServiceTitle(
-                      line,
-                      direction,
-                      directionIndex,
-                    ),
-                  ),
               ],
             ),
             const SizedBox(height: 14),
-            _DirectionBox(
-              origin: direction.originName,
-              destination: direction.destinationName,
-              circular: line.isCircular,
-            ),
-            const SizedBox(height: 12),
+            if (!line.isCircular) ...[
+              _DirectionBox(
+                origin: direction.originName,
+                destination: direction.destinationName,
+              ),
+              const SizedBox(height: 12),
+            ],
             TText(
               'Prossime partenze',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -621,17 +529,6 @@ class _LineDetailPageState extends State<LineDetailPage> {
                               selectedTrips: _selectedTrips,
                             ),
                           ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => widget.store.toggleFavorite(line.id),
-                        tooltip: tr(context, 'Salva linea'),
-                        icon: Icon(
-                          widget.store.isFavorite(line.id)
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: JivaioColors.danger,
-                          size: 28,
                         ),
                       ),
                     ],
@@ -906,6 +803,7 @@ class AlertsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return PublicScaffold(
       store: store,
+      showBrandMark: false,
       child: AnimatedBuilder(
         animation: store,
         builder: (context, _) => PageFrame(
@@ -1055,53 +953,11 @@ class AlertCard extends StatelessWidget {
 }
 
 class _DirectionBox extends StatelessWidget {
-  const _DirectionBox({
-    required this.origin,
-    required this.destination,
-    this.circular = false,
-  });
+  const _DirectionBox({required this.origin, required this.destination});
   final String origin;
   final String destination;
-  final bool circular;
-
   @override
   Widget build(BuildContext context) {
-    if (circular) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-        decoration: BoxDecoration(
-          border: Border.all(color: JivaioColors.border),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.sync, color: JivaioColors.blue, size: 25),
-            SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TText(
-                    'Percorso circolare',
-                    style: TextStyle(
-                      color: JivaioColors.navy,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  TText(
-                    'La fermata di partenza è indicata per ogni corsa',
-                    style: TextStyle(
-                      color: JivaioColors.secondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
