@@ -465,7 +465,9 @@ class _LineCard extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: () => Navigator.of(context).pushNamed(
                   '/line/${Uri.encodeComponent(line.id)}',
-                  arguments: direction.id,
+                  arguments: upcoming.departures.isEmpty
+                      ? direction.id
+                      : upcoming.departures.first.direction.id,
                 ),
                 icon: const Icon(Icons.open_in_new, size: 18),
                 label: const Text('Apri linea completa'),

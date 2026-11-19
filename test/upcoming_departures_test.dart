@@ -79,6 +79,13 @@ void main() {
           times(upcomingDepartures(directions, DateTime.utc(2026, 11, 21, 7))),
           ['09:00'],
         );
+        expect(
+          upcomingDepartures(
+            directions,
+            DateTime.utc(2026, 11, 21, 7),
+          ).departures.single.direction,
+          same(sat),
+        );
       },
     );
 
