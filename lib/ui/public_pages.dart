@@ -316,6 +316,44 @@ class _LineGridState extends State<_LineGrid> with WidgetsBindingObserver {
   }
 }
 
+class _LineBadge extends StatelessWidget {
+  const _LineBadge({required this.code, required this.size});
+  final String code;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: JivaioColors.blue,
+      borderRadius: BorderRadius.circular(size * .29),
+    ),
+    child: code.trim().length > 6
+        ? const Icon(
+            Icons.directions_bus_rounded,
+            color: Colors.white,
+            size: 28,
+          )
+        : Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                code,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+  );
+}
+
 class _LineCard extends StatelessWidget {
   const _LineCard({required this.pair, required this.store, required this.now});
   final _LineDirectionPair pair;
@@ -338,26 +376,7 @@ class _LineCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  constraints: const BoxConstraints(
-                    minWidth: 58,
-                    minHeight: 58,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 9),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: JivaioColors.blue,
-                    borderRadius: BorderRadius.circular(17),
-                  ),
-                  child: Text(
-                    line.code,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
+                _LineBadge(code: line.code, size: 58),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -369,11 +388,13 @@ class _LineCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Linea ${line.code}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
+                      if (line.code.trim().length <= 6) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          'Linea ${line.code}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                       const SizedBox(height: 7),
                       _SmallPill(
                         icon: Icons.location_on,
@@ -546,23 +567,7 @@ class _LineDetailPageState extends State<LineDetailPage> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Container(
-                        width: 68,
-                        height: 68,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: JivaioColors.blue,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          line.code,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 21,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
+                      _LineBadge(code: line.code, size: 68),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -573,9 +578,13 @@ class _LineDetailPageState extends State<LineDetailPage> {
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             Text(
-                              line.isCircular
-                                  ? 'Linea ${line.code} · circolare · ${line.stopCount} fermate'
-                                  : 'Linea ${line.code} · ${line.stopCount} fermate',
+                              line.code.trim().length > 6
+                                  ? (line.isCircular
+                                        ? 'Circolare · ${line.stopCount} fermate'
+                                        : '${line.stopCount} fermate')
+                                  : (line.isCircular
+                                        ? 'Linea ${line.code} · circolare · ${line.stopCount} fermate'
+                                        : 'Linea ${line.code} · ${line.stopCount} fermate'),
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
                             _SelectedTripNote(
@@ -1156,12 +1165,14 @@ class _SmallPill extends StatelessWidget {
       children: [
         Icon(icon, size: 13, color: tint),
         const SizedBox(width: 5),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: tint,
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: tint,
+            ),
           ),
         ),
       ],
