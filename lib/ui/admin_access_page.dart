@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../i18n/app_language.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/jivaio_store.dart';
@@ -174,7 +177,7 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
                 children: [
                   const Icon(Icons.admin_panel_settings_outlined, size: 42),
                   const SizedBox(height: 12),
-                  Text(
+                  TText(
                     'Accesso amministratore',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge,
@@ -184,10 +187,12 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.username],
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Email'),
+                    ),
                     validator: (value) =>
                         (value == null || !value.contains('@'))
-                        ? 'Inserisci un’email valida'
+                        ? tr(context, 'Inserisci un’email valida')
                         : null,
                   ),
                   const SizedBox(height: 12),
@@ -195,15 +200,17 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
                     controller: _password,
                     obscureText: true,
                     autofillHints: const [AutofillHints.password],
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Password'),
+                    ),
                     validator: (value) => (value == null || value.isEmpty)
-                        ? 'Inserisci la password'
+                        ? tr(context, 'Inserisci la password')
                         : null,
                     onFieldSubmitted: (_) => _signIn(),
                   ),
                   if (_message != null) ...[
                     const SizedBox(height: 14),
-                    Text(
+                    TText(
                       _message!,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.error,
@@ -219,12 +226,12 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Accedi'),
+                        : const TText('Accedi'),
                   ),
                   TextButton(
                     onPressed: () =>
                         Navigator.of(context).pushReplacementNamed('/'),
-                    child: const Text('Torna alla home'),
+                    child: const TText('Torna alla home'),
                   ),
                 ],
               ),
@@ -276,11 +283,11 @@ class _AccessMessage extends StatelessWidget {
           children: [
             Icon(icon, size: 42),
             const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            TText(title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 10),
-            Text(body, textAlign: TextAlign.center),
+            TText(body, textAlign: TextAlign.center),
             const SizedBox(height: 20),
-            FilledButton(onPressed: onAction, child: Text(actionLabel)),
+            FilledButton(onPressed: onAction, child: TText(actionLabel)),
           ],
         ),
       ),

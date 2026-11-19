@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'i18n/app_language.dart';
 
 import 'data/jivaio_store.dart';
 import 'data/supabase_config.dart';
@@ -9,11 +12,14 @@ import 'ui/public_pages.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.initialize();
-  runApp(const JivaioRoot());
+  final language = await AppLanguage.load();
+  runApp(JivaioRoot(language: language));
 }
 
 class JivaioRoot extends StatefulWidget {
-  const JivaioRoot({super.key});
+  const JivaioRoot({required this.language, super.key});
+
+  final AppLanguage language;
 
   @override
   State<JivaioRoot> createState() => _JivaioRootState();
@@ -58,12 +64,21 @@ class _JivaioRootState extends State<JivaioRoot> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'JiVaio · Linee e orari',
-      debugShowCheckedModeBanner: false,
-      theme: buildJivaioTheme(),
-      onGenerateRoute: _route,
-      initialRoute: '/',
+    return LanguageScope(
+      language: widget.language,
+      child: AnimatedBuilder(
+        animation: widget.language,
+        builder: (context, _) => MaterialApp(
+          locale: Locale(widget.language.code),
+          supportedLocales: languageNames.keys.map(Locale.new),
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          title: tr(context, 'JiVaio · Linee e orari'),
+          debugShowCheckedModeBanner: false,
+          theme: buildJivaioTheme(),
+          onGenerateRoute: _route,
+          initialRoute: '/',
+        ),
+      ),
     );
   }
 }

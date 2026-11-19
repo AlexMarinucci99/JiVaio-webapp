@@ -30,13 +30,42 @@ ThemeData buildJivaioTheme() {
     colorScheme: scheme,
     scaffoldBackgroundColor: JivaioColors.page,
     fontFamily: 'Roboto',
+    fontFamilyFallback: const ['NotoSansArabic'],
     textTheme: const TextTheme(
-      headlineMedium: TextStyle(fontSize: 34, height: 1.12, fontWeight: FontWeight.w800, color: JivaioColors.navy),
-      headlineSmall: TextStyle(fontSize: 27, height: 1.16, fontWeight: FontWeight.w800, color: JivaioColors.navy),
-      titleLarge: TextStyle(fontSize: 21, height: 1.2, fontWeight: FontWeight.w800, color: JivaioColors.navy),
-      titleMedium: TextStyle(fontSize: 17, height: 1.25, fontWeight: FontWeight.w700, color: JivaioColors.navy),
-      bodyLarge: TextStyle(fontSize: 16, height: 1.45, color: JivaioColors.text),
-      bodyMedium: TextStyle(fontSize: 14, height: 1.45, color: JivaioColors.secondary),
+      headlineMedium: TextStyle(
+        fontSize: 34,
+        height: 1.12,
+        fontWeight: FontWeight.w800,
+        color: JivaioColors.navy,
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 27,
+        height: 1.16,
+        fontWeight: FontWeight.w800,
+        color: JivaioColors.navy,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 21,
+        height: 1.2,
+        fontWeight: FontWeight.w800,
+        color: JivaioColors.navy,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 17,
+        height: 1.25,
+        fontWeight: FontWeight.w700,
+        color: JivaioColors.navy,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        height: 1.45,
+        color: JivaioColors.text,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        height: 1.45,
+        color: JivaioColors.secondary,
+      ),
       labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -85,6 +114,10 @@ ThemeData buildJivaioTheme() {
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
     ),
-    dividerTheme: const DividerThemeData(color: JivaioColors.border, thickness: 1, space: 1),
+    dividerTheme: const DividerThemeData(
+      color: JivaioColors.border,
+      thickness: 1,
+      space: 1,
+    ),
   );
 }

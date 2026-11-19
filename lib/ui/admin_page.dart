@@ -3,6 +3,9 @@ import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
+
+import '../i18n/app_language.dart';
+
 import 'package:web/web.dart' as web;
 
 import '../data/jivaio_store.dart';
@@ -40,12 +43,12 @@ class _AdminPageState extends State<AdminPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        TText(
                           'Gestione JiVaio',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 5),
-                        Text(
+                        TText(
                           widget.store.usesCloud
                               ? 'Modifica i dati condivisi tra i dispositivi.'
                               : 'Modifica i dati di anteprima dal browser.',
@@ -60,17 +63,17 @@ class _AdminPageState extends State<AdminPage> {
                       OutlinedButton.icon(
                         onPressed: _chooseBackupFile,
                         icon: const Icon(Icons.upload_file_outlined),
-                        label: const Text('Importa backup'),
+                        label: const TText('Importa backup'),
                       ),
                       OutlinedButton.icon(
                         onPressed: _exportSnapshot,
                         icon: const Icon(Icons.download_outlined),
-                        label: const Text('Esporta backup'),
+                        label: const TText('Esporta backup'),
                       ),
                       OutlinedButton.icon(
                         onPressed: widget.onSignOut,
                         icon: const Icon(Icons.logout),
-                        label: const Text('Esci'),
+                        label: const TText('Esci'),
                       ),
                     ],
                   ),
@@ -83,12 +86,12 @@ class _AdminPageState extends State<AdminPage> {
                 segments: const [
                   ButtonSegment(
                     value: 0,
-                    label: Text('Linee'),
+                    label: TText('Linee'),
                     icon: Icon(Icons.directions_bus_outlined),
                   ),
                   ButtonSegment(
                     value: 1,
-                    label: Text('Avvisi'),
+                    label: TText('Avvisi'),
                     icon: Icon(Icons.campaign_outlined),
                   ),
                 ],
@@ -105,7 +108,7 @@ class _AdminPageState extends State<AdminPage> {
                   onPressed: () =>
                       Navigator.of(context).pushReplacementNamed('/lines'),
                   icon: const Icon(Icons.open_in_new),
-                  label: const Text('Apri anteprima pubblica'),
+                  label: const TText('Apri anteprima pubblica'),
                 ),
               ),
             ],
@@ -124,7 +127,7 @@ class _AdminPageState extends State<AdminPage> {
         Row(
           children: [
             Expanded(
-              child: Text(
+              child: TText(
                 '${lines.length} linee',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
@@ -132,7 +135,7 @@ class _AdminPageState extends State<AdminPage> {
             FilledButton.icon(
               onPressed: () => _editLine(),
               icon: const Icon(Icons.add),
-              label: const Text('Nuova linea'),
+              label: const TText('Nuova linea'),
             ),
           ],
         ),
@@ -172,7 +175,7 @@ class _AdminPageState extends State<AdminPage> {
         Row(
           children: [
             Expanded(
-              child: Text(
+              child: TText(
                 '${alerts.length} avvisi',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
@@ -180,7 +183,7 @@ class _AdminPageState extends State<AdminPage> {
             FilledButton.icon(
               onPressed: () => _editAlert(),
               icon: const Icon(Icons.add),
-              label: const Text('Nuovo avviso'),
+              label: const TText('Nuovo avviso'),
             ),
           ],
         ),
@@ -253,7 +256,7 @@ class _AdminPageState extends State<AdminPage> {
           ? error.toString()
           : 'Operazione non riuscita. Controlla la connessione e riprova.';
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+          .showSnackBar(SnackBar(content: TText(message)));
     }
   }
 
@@ -306,16 +309,16 @@ class _AdminPageState extends State<AdminPage> {
       await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
+          title: TText(title),
+          content: TText(message),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annulla'),
+              child: const TText('Annulla'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Conferma'),
+              child: const TText('Conferma'),
             ),
           ],
         ),
@@ -331,12 +334,12 @@ class _AdminPageState extends State<AdminPage> {
     return showDialog<TransitLine>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(title),
+        title: TText(title),
         children: [
           if (sorted.isEmpty)
             const Padding(
               padding: EdgeInsets.all(24),
-              child: Text('Nessuna linea disponibile.'),
+              child: TText('Nessuna linea disponibile.'),
             )
           else
             SizedBox(
@@ -349,14 +352,14 @@ class _AdminPageState extends State<AdminPage> {
                   final line = sorted[index];
                   return SimpleDialogOption(
                     onPressed: () => Navigator.pop(context, line),
-                    child: Text('${line.code} · ${line.name}'),
+                    child: TText('${line.code} · ${line.name}'),
                   );
                 },
               ),
             ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annulla'),
+            child: const TText('Annulla'),
           ),
         ],
       ),
@@ -367,19 +370,19 @@ class _AdminPageState extends State<AdminPage> {
     final mode = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Cosa vuoi esportare?'),
+        title: const TText('Cosa vuoi esportare?'),
         children: [
           SimpleDialogOption(
             onPressed: () => Navigator.pop(context, 'all'),
-            child: const Text('Backup completo · tutte le linee e gli avvisi'),
+            child: const TText('Backup completo · tutte le linee e gli avvisi'),
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(context, 'line'),
-            child: const Text('Una singola linea'),
+            child: const TText('Una singola linea'),
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annulla'),
+            child: const TText('Annulla'),
           ),
         ],
       ),
@@ -420,7 +423,7 @@ class _AdminPageState extends State<AdminPage> {
     anchor.click();
     anchor.remove();
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Backup JSON scaricato.')));
+        .showSnackBar(const SnackBar(content: TText('Backup JSON scaricato.')));
   }
 
   void _chooseBackupFile() {
@@ -485,22 +488,29 @@ class _AdminPageState extends State<AdminPage> {
       final mode = await showDialog<String>(
         context: context,
         builder: (context) => SimpleDialog(
-          title: const Text('Cosa vuoi importare?'),
+          title: const TText('Cosa vuoi importare?'),
           children: [
             SimpleDialogOption(
               onPressed: () => Navigator.pop(context, 'all'),
-              child: Text(
-                'Tutto il contenuto · ${importedLines.length} linee e ${importedAlerts.length} avvisi',
+              child: TText(
+                trFormat(
+                  context,
+                  'Tutto il contenuto · {lines} linee e {alerts} avvisi',
+                  {
+                    'lines': '${importedLines.length}',
+                    'alerts': '${importedAlerts.length}',
+                  },
+                ),
               ),
             ),
             if (importedLines.isNotEmpty)
               SimpleDialogOption(
                 onPressed: () => Navigator.pop(context, 'line'),
-                child: const Text('Una singola linea dal file'),
+                child: const TText('Una singola linea dal file'),
               ),
             SimpleDialogOption(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annulla'),
+              child: const TText('Annulla'),
             ),
           ],
         ),
@@ -543,21 +553,43 @@ class _AdminPageState extends State<AdminPage> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Importare il backup?'),
-          content: Text(
+          title: const TText('Importare il backup?'),
+          content: TText(
             selectedLine == null
-                ? 'Importi ${linesToImport.length} linee e ${alertsToImport.length} avvisi. Verranno sostituiti $matchingLines linee e $matchingAlerts avvisi già presenti con lo stesso ID. Gli altri dati e i preferiti resteranno.'
-                : 'Importi la linea ${selectedLine.code} · ${selectedLine.name}. ${matchingLines > 0 ? 'La linea esistente con lo stesso ID sarà sostituita.' : 'La linea verrà aggiunta.'} Le altre linee, gli avvisi e i preferiti resteranno.',
+                ? trFormat(
+                    context,
+                    'Importi {lines} linee e {alerts} avvisi. Verranno sostituiti {matchingLines} linee e {matchingAlerts} avvisi già presenti con lo stesso ID. Gli altri dati e i preferiti resteranno.',
+                    {
+                      'lines': '${linesToImport.length}',
+                      'alerts': '${alertsToImport.length}',
+                      'matchingLines': '$matchingLines',
+                      'matchingAlerts': '$matchingAlerts',
+                    },
+                  )
+                : trFormat(
+                    context,
+                    'Importi la linea {code} · {name}. {status} Le altre linee, gli avvisi e i preferiti resteranno.',
+                    {
+                      'code': selectedLine.code,
+                      'name': selectedLine.name,
+                      'status': tr(
+                        context,
+                        matchingLines > 0
+                            ? 'La linea esistente con lo stesso ID sarà sostituita.'
+                            : 'La linea verrà aggiunta.',
+                      ),
+                    },
+                  ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annulla'),
+              child: const TText('Annulla'),
             ),
             FilledButton.icon(
               onPressed: () => Navigator.pop(context, true),
               icon: const Icon(Icons.upload_file_outlined),
-              label: const Text('Importa e unisci'),
+              label: const TText('Importa e unisci'),
             ),
           ],
         ),
@@ -572,7 +604,7 @@ class _AdminPageState extends State<AdminPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: TText(
             widget.store.loadError == null ? 'Backup importato correttamente.' : 'Backup importato, ma non riesco ad aggiornare la schermata. Riprova.',
           ),
         ),
@@ -580,7 +612,7 @@ class _AdminPageState extends State<AdminPage> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Non riesco a importare il backup: $error')),
+        SnackBar(content: TText('Non riesco a importare il backup: $error')),
       );
     }
   }
@@ -603,7 +635,7 @@ class _AdminNotice extends StatelessWidget {
         const Icon(Icons.phonelink_outlined, color: Color(0xFF95620B)),
         const SizedBox(width: 11),
         Expanded(
-          child: Text(
+          child: TText(
             usesCloud
                 ? 'Le modifiche salvate sono condivise tra i browser. Esporta periodicamente un backup.'
                 : 'Modalità anteprima: le modifiche sono salvate solo in questo browser.',
@@ -639,7 +671,7 @@ class _LineAdminRow extends StatelessWidget {
             color: JivaioColors.blueLight,
             borderRadius: BorderRadius.circular(13),
           ),
-          child: Text(
+          child: TText(
             line.code,
             style: const TextStyle(
               color: JivaioColors.blue,
@@ -652,12 +684,12 @@ class _LineAdminRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(line.name, style: Theme.of(context).textTheme.titleMedium),
-              Text(
-                '${line.directions.length} gruppi ${line.isCircular ? 'circuito' : 'direzione'}/orario · ${line.stopCount} fermate${line.isManual ? ' · inserita a mano' : ''}',
+              TText(line.name, style: Theme.of(context).textTheme.titleMedium),
+              TText(
+                '${tr(context, '${line.directions.length} gruppi ${line.isCircular ? 'circuito' : 'direzione'}/orario')} · ${tr(context, '${line.stopCount} fermate')}${line.isManual ? ' · ${tr(context, 'inserita a mano')}' : ''}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              Text(
+              TText(
                 line.isVisible
                     ? 'Visibile al pubblico'
                     : 'Nascosta al pubblico',
@@ -671,7 +703,7 @@ class _LineAdminRow extends StatelessWidget {
               ),
               if (line.dataWarning != null) ...[
                 const SizedBox(height: 5),
-                Text(
+                TText(
                   line.dataWarning!,
                   style: const TextStyle(
                     color: Color(0xFF95620B),
@@ -684,7 +716,10 @@ class _LineAdminRow extends StatelessWidget {
           ),
         ),
         IconButton(
-          tooltip: line.isVisible ? 'Nascondi linea' : 'Mostra linea',
+          tooltip: tr(
+            context,
+            line.isVisible ? 'Nascondi linea' : 'Mostra linea',
+          ),
           onPressed: onToggleVisibility,
           icon: Icon(
             line.isVisible
@@ -694,12 +729,12 @@ class _LineAdminRow extends StatelessWidget {
           ),
         ),
         IconButton(
-          tooltip: 'Modifica',
+          tooltip: tr(context, 'Modifica'),
           onPressed: onEdit,
           icon: const Icon(Icons.edit_outlined),
         ),
         IconButton(
-          tooltip: 'Elimina',
+          tooltip: tr(context, 'Elimina'),
           onPressed: onDelete,
           icon: const Icon(Icons.delete_outline, color: JivaioColors.danger),
         ),
@@ -731,8 +766,11 @@ class _AlertAdminRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(alert.title, style: Theme.of(context).textTheme.titleMedium),
-              Text(
+              TText(
+                alert.title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              TText(
                 '${alert.isPublished ? 'Pubblicato' : 'Bozza'} · ${alert.severity} · ${alert.affectedLines.isEmpty ? 'tutte le linee' : alert.affectedLines.join(', ')}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
@@ -740,12 +778,12 @@ class _AlertAdminRow extends StatelessWidget {
           ),
         ),
         IconButton(
-          tooltip: 'Modifica',
+          tooltip: tr(context, 'Modifica'),
           onPressed: onEdit,
           icon: const Icon(Icons.edit_outlined),
         ),
         IconButton(
-          tooltip: 'Elimina',
+          tooltip: tr(context, 'Elimina'),
           onPressed: onDelete,
           icon: const Icon(Icons.delete_outline, color: JivaioColors.danger),
         ),
@@ -872,7 +910,7 @@ class _LineEditorState extends State<_LineEditor> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
+                    child: TText(
                       widget.line == null
                           ? 'Nuova linea'
                           : 'Modifica linea ${widget.line!.code}',
@@ -896,11 +934,14 @@ class _LineEditorState extends State<_LineEditor> {
                       final fields = [
                         TextFormField(
                           controller: _code,
-                          decoration: const InputDecoration(
-                            labelText: 'Codice linea',
-                            hintText: 'Es. 2U',
+                          decoration: InputDecoration(
+                            labelText: tr(context, 'Codice linea'),
+                            hintText: tr(context, 'Es. 2U'),
                           ),
-                          validator: _required,
+                          validator: (value) {
+                            final error = _required(value);
+                            return error == null ? null : tr(context, error);
+                          },
                           onChanged: (value) {
                             if (_requiresCircular(value) && !_isCircular) {
                               setState(() => _isCircular = true);
@@ -909,21 +950,27 @@ class _LineEditorState extends State<_LineEditor> {
                         ),
                         TextFormField(
                           controller: _name,
-                          decoration: const InputDecoration(
-                            labelText: 'Nome linea',
-                            hintText: 'Es. Terminalbus – L’Aquilone',
+                          decoration: InputDecoration(
+                            labelText: tr(context, 'Nome linea'),
+                            hintText: tr(
+                              context,
+                              'Es. Terminalbus – L’Aquilone',
+                            ),
                           ),
-                          validator: _required,
+                          validator: (value) {
+                            final error = _required(value);
+                            return error == null ? null : tr(context, error);
+                          },
                         ),
                         TextFormField(
                           controller: _stopCount,
-                          decoration: const InputDecoration(
-                            labelText: 'Numero fermate',
-                            hintText: 'Es. 24',
+                          decoration: InputDecoration(
+                            labelText: tr(context, 'Numero fermate'),
+                            hintText: tr(context, 'Es. 24'),
                           ),
                           keyboardType: TextInputType.number,
                           validator: (v) => int.tryParse(v ?? '') == null
-                              ? 'Inserisci un numero'
+                              ? tr(context, 'Inserisci un numero')
                               : null,
                         ),
                       ];
@@ -957,8 +1004,8 @@ class _LineEditorState extends State<_LineEditor> {
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     value: _isCircular || _requiresCircular(_code.text),
-                    title: const Text('Linea circolare / ad anello'),
-                    subtitle: const Text(
+                    title: const TText('Linea circolare / ad anello'),
+                    subtitle: const TText(
                       'Usa un solo percorso per corsa: non viene richiesto il ritorno.',
                     ),
                     onChanged: (value) {
@@ -992,7 +1039,7 @@ class _LineEditorState extends State<_LineEditor> {
                     },
                   ),
                   const SizedBox(height: 7),
-                  Text(
+                  TText(
                     _isCircular
                         ? 'Ogni partenza può avere un percorso diverso. Aggiungi una corsa e specifica tutte le fermate con il relativo orario intermedio.'
                         : 'Per ogni calendario inserisci andata e ritorno. Ogni partenza conserva il proprio percorso e i propri orari intermedi.',
@@ -1028,7 +1075,7 @@ class _LineEditorState extends State<_LineEditor> {
                   OutlinedButton.icon(
                     onPressed: _addCalendarGroup,
                     icon: const Icon(Icons.calendar_month_outlined),
-                    label: Text(
+                    label: TText(
                       _isCircular
                           ? 'Aggiungi circuito per un altro calendario'
                           : 'Aggiungi andata e ritorno per un altro calendario',
@@ -1040,7 +1087,7 @@ class _LineEditorState extends State<_LineEditor> {
             if (_saveError != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: Text(
+                child: TText(
                   _saveError!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
@@ -1053,13 +1100,13 @@ class _LineEditorState extends State<_LineEditor> {
                 children: [
                   TextButton(
                     onPressed: _isSaving ? null : () => Navigator.pop(context),
-                    child: const Text('Annulla'),
+                    child: const TText('Annulla'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: _isSaving ? null : _save,
                     icon: const Icon(Icons.save_outlined),
-                    label: const Text('Salva linea'),
+                    label: const TText('Salva linea'),
                   ),
                 ],
               ),
@@ -1177,12 +1224,12 @@ class _LineEditorState extends State<_LineEditor> {
     final serviceId = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Aggiungi orari per'),
+        title: const TText('Aggiungi orari per'),
         children: [
           for (final option in _serviceOptions)
             SimpleDialogOption(
               onPressed: () => Navigator.pop(context, option.$1),
-              child: Text(option.$2),
+              child: TText(option.$2),
             ),
         ],
       ),
@@ -1374,14 +1421,14 @@ class _DirectionForm extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
+              child: TText(
                 label,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
             if (onRemoveDirection != null)
               IconButton(
-                tooltip: 'Rimuovi questo circuito',
+                tooltip: tr(context, 'Rimuovi questo circuito'),
                 onPressed: onRemoveDirection,
                 icon: const Icon(
                   Icons.delete_outline,
@@ -1400,17 +1447,19 @@ class _DirectionForm extends StatelessWidget {
               _serviceOptions.any((option) => option.$1 == fields.serviceId)
               ? fields.serviceId
               : '1',
-          decoration: const InputDecoration(labelText: 'Validità degli orari'),
+          decoration: InputDecoration(
+            labelText: tr(context, 'Validità degli orari'),
+          ),
           items: [
             for (final option in _serviceOptions)
-              DropdownMenuItem(value: option.$1, child: Text(option.$2)),
+              DropdownMenuItem(value: option.$1, child: TText(option.$2)),
           ],
           onChanged: (value) {
             if (value != null) onServiceChanged(value);
           },
         ),
         const SizedBox(height: 16),
-        Text(
+        TText(
           isCircular
               ? 'Ogni partenza del circuito può iniziare da una fermata diversa.'
               : 'Ogni partenza può avere un percorso e orari intermedi diversi.',
@@ -1420,7 +1469,7 @@ class _DirectionForm extends StatelessWidget {
         if (fields.trips.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Nessuna corsa inserita per questo calendario.'),
+            child: TText('Nessuna corsa inserita per questo calendario.'),
           )
         else
           for (var i = 0; i < fields.trips.length; i++)
@@ -1436,7 +1485,7 @@ class _DirectionForm extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onAddTrip,
             icon: const Icon(Icons.add),
-            label: const Text('Aggiungi partenza'),
+            label: const TText('Aggiungi partenza'),
           ),
         ),
       ],
@@ -1472,7 +1521,7 @@ class _TripAdminRow extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Elimina partenza',
+                tooltip: tr(context, 'Elimina partenza'),
                 onPressed: onRemove,
                 icon: const Icon(
                   Icons.delete_outline,
@@ -1483,7 +1532,7 @@ class _TripAdminRow extends StatelessWidget {
           ),
           if (trip.stops.isNotEmpty) ...[
             const SizedBox(height: 5),
-            Text(
+            TText(
               'Parte da ${trip.stops.first.name} · ${trip.stops.length} fermate${trip.headsign.text.trim().isEmpty ? '' : ' · ${trip.headsign.text.trim()}'}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -1493,9 +1542,9 @@ class _TripAdminRow extends StatelessWidget {
             controller: trip.note,
             minLines: 1,
             maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'Nota per questa corsa (facoltativa)',
-              hintText: 'Es. Corsa scolastica',
+            decoration: InputDecoration(
+              labelText: tr(context, 'Nota per questa corsa (facoltativa)'),
+              hintText: tr(context, 'Es. Corsa scolastica'),
               prefixIcon: Icon(Icons.notes_outlined),
             ),
           ),
@@ -1503,7 +1552,7 @@ class _TripAdminRow extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onEditStops,
             icon: const Icon(Icons.route_outlined),
-            label: Text(
+            label: TText(
               trip.stops.isEmpty
                   ? 'Aggiungi percorso e orari intermedi'
                   : 'Modifica percorso (${trip.stops.length} fermate)',
@@ -1551,17 +1600,20 @@ class _TimeInput extends StatelessWidget {
   Widget build(BuildContext context) => TextFormField(
     controller: controller,
     decoration: InputDecoration(
-      labelText: label,
-      hintText: '07:15',
+      labelText: tr(context, label),
+      hintText: tr(context, '07:15'),
       prefixIcon: const Icon(Icons.schedule),
       suffixIcon: IconButton(
-        tooltip: 'Scegli orario',
+        tooltip: tr(context, 'Scegli orario'),
         onPressed: () => _pickTime(context),
         icon: const Icon(Icons.access_time_filled, color: JivaioColors.blue),
       ),
     ),
     keyboardType: TextInputType.datetime,
-    validator: _validateOptionalTime,
+    validator: (value) {
+      final error = _validateOptionalTime(value);
+      return error == null ? null : tr(context, error);
+    },
   );
 }
 
@@ -1648,7 +1700,7 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
     final lines = _stops.text.split('\n');
     if (!lines.any((line) => line.trim().isNotEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inserisci prima almeno una fermata.')),
+        const SnackBar(content: TText('Inserisci prima almeno una fermata.')),
       );
       return;
     }
@@ -1662,7 +1714,7 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Percorso di questa partenza'),
+    title: const TText('Percorso di questa partenza'),
     content: SizedBox(
       width: 620,
       child: Form(
@@ -1670,16 +1722,16 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            Text(
+            TText(
               'Inserisci tutte le fermate in ordine. La prima fermata può cambiare da una partenza all’altra.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _headsign,
-              decoration: const InputDecoration(
-                labelText: 'Destinazione mostrata (facoltativa)',
-                hintText: 'Es. Ospedale',
+              decoration: InputDecoration(
+                labelText: tr(context, 'Destinazione mostrata (facoltativa)'),
+                hintText: tr(context, 'Es. Ospedale'),
               ),
             ),
             const SizedBox(height: 12),
@@ -1687,15 +1739,21 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
               controller: _stops,
               minLines: 9,
               maxLines: 16,
-              decoration: const InputDecoration(
-                labelText: 'Fermate e orari intermedi',
-                hintText: 'Terminalbus | 07:15\nPiazza Duomo | 07:22\nOspedale | 07:40',
+              decoration: InputDecoration(
+                labelText: tr(context, 'Fermate e orari intermedi'),
+                hintText: tr(
+                  context,
+                  'Terminalbus | 07:15\nPiazza Duomo | 07:22\nOspedale | 07:40',
+                ),
                 alignLabelWithHint: true,
               ),
-              validator: _validateStopRows,
+              validator: (value) {
+                final error = _validateStopRows(value);
+                return error == null ? null : tr(context, error);
+              },
             ),
             const SizedBox(height: 8),
-            Text(
+            TText(
               'Formato: Nome fermata | HH:MM, una fermata per riga. Usa ~ prima dell’orario se è stimato. Se lasci vuoto l’orario della prima fermata useremo quello di partenza.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -1705,7 +1763,7 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
               child: OutlinedButton.icon(
                 onPressed: _editStopTimes,
                 icon: const Icon(Icons.schedule),
-                label: const Text('Modifica orari delle fermate'),
+                label: const TText('Modifica orari delle fermate'),
               ),
             ),
           ],
@@ -1715,12 +1773,12 @@ class _TripStopsEditorState extends State<_TripStopsEditor> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Annulla'),
+        child: const TText('Annulla'),
       ),
       FilledButton.icon(
         onPressed: _save,
         icon: const Icon(Icons.save_outlined),
-        label: const Text('Salva percorso'),
+        label: const TText('Salva percorso'),
       ),
     ],
   );
@@ -1789,7 +1847,7 @@ class _StopTimesEditorState extends State<_StopTimesEditor> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Orari delle fermate'),
+    title: const TText('Orari delle fermate'),
     content: SizedBox(
       width: 620,
       child: Form(
@@ -1797,7 +1855,7 @@ class _StopTimesEditorState extends State<_StopTimesEditor> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            Text(
+            TText(
               'Scrivi l’orario o usa l’icona dell’orologio. Puoi lasciare vuoti gli orari che non conosci.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -1816,7 +1874,7 @@ class _StopTimesEditorState extends State<_StopTimesEditor> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
+                        TText(
                           row.name,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
@@ -1824,7 +1882,7 @@ class _StopTimesEditorState extends State<_StopTimesEditor> {
                         _TimeInput(controller: row.time, label: 'Orario'),
                         CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Orario stimato'),
+                          title: const TText('Orario stimato'),
                           value: row.isEstimated,
                           onChanged: (value) =>
                               setState(() => row.isEstimated = value ?? false),
@@ -1841,9 +1899,9 @@ class _StopTimesEditorState extends State<_StopTimesEditor> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Annulla'),
+        child: const TText('Annulla'),
       ),
-      FilledButton(onPressed: _save, child: const Text('Applica orari')),
+      FilledButton(onPressed: _save, child: const TText('Applica orari')),
     ],
   );
 }
@@ -1869,7 +1927,7 @@ class _ReviewWarning extends StatelessWidget {
         ),
         const SizedBox(width: 9),
         Expanded(
-          child: Text(
+          child: TText(
             text,
             style: const TextStyle(color: Color(0xFF755214), height: 1.4),
           ),
@@ -1974,7 +2032,7 @@ class _AlertEditorState extends State<_AlertEditor> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
+                    child: TText(
                       widget.alert == null ? 'Nuovo avviso' : 'Modifica avviso',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
@@ -1993,40 +2051,54 @@ class _AlertEditorState extends State<_AlertEditor> {
                 children: [
                   TextFormField(
                     controller: _title,
-                    decoration: const InputDecoration(labelText: 'Titolo'),
-                    validator: _required,
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Titolo'),
+                    ),
+                    validator: (value) {
+                      final error = _required(value);
+                      return error == null ? null : tr(context, error);
+                    },
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _summary,
                     minLines: 2,
                     maxLines: 3,
-                    decoration: const InputDecoration(labelText: 'Riepilogo'),
-                    validator: _required,
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Riepilogo'),
+                    ),
+                    validator: (value) {
+                      final error = _required(value);
+                      return error == null ? null : tr(context, error);
+                    },
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _details,
                     minLines: 3,
                     maxLines: 6,
-                    decoration: const InputDecoration(labelText: 'Dettagli'),
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Dettagli'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: _severity,
-                    decoration: const InputDecoration(labelText: 'Priorità'),
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Priorità'),
+                    ),
                     items: const [
                       DropdownMenuItem(
                         value: 'info',
-                        child: Text('Informazione'),
+                        child: TText('Informazione'),
                       ),
                       DropdownMenuItem(
                         value: 'warning',
-                        child: Text('Modifica servizio'),
+                        child: TText('Modifica servizio'),
                       ),
                       DropdownMenuItem(
                         value: 'critical',
-                        child: Text('Importante'),
+                        child: TText('Importante'),
                       ),
                     ],
                     onChanged: (value) =>
@@ -2040,12 +2112,12 @@ class _AlertEditorState extends State<_AlertEditor> {
                       OutlinedButton.icon(
                         onPressed: () => _pickDate(isStart: true),
                         icon: const Icon(Icons.calendar_today_outlined),
-                        label: Text('Inizio: ${_formatDate(_startsAt)}'),
+                        label: TText('Inizio: ${_formatDate(_startsAt)}'),
                       ),
                       OutlinedButton.icon(
                         onPressed: () => _pickDate(isStart: false),
                         icon: const Icon(Icons.event_available_outlined),
-                        label: Text(
+                        label: TText(
                           _endsAt == null
                               ? 'Senza scadenza'
                               : 'Fine: ${_formatDate(_endsAt!)}',
@@ -2056,27 +2128,29 @@ class _AlertEditorState extends State<_AlertEditor> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _lines,
-                    decoration: const InputDecoration(
-                      labelText: 'Linee coinvolte',
-                      hintText: 'Es. 12A, 13Z · vuoto = tutte',
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Linee coinvolte'),
+                      hintText: tr(context, 'Es. 12A, 13Z · vuoto = tutte'),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _source,
-                    decoration: const InputDecoration(
-                      labelText: 'Fonte / autore',
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Fonte / autore'),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _sourceUrl,
-                    decoration: const InputDecoration(labelText: 'Link fonte'),
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Link fonte'),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Pubblica avviso'),
+                    title: const TText('Pubblica avviso'),
                     value: _published,
                     onChanged: (value) => setState(() => _published = value),
                   ),
@@ -2086,7 +2160,7 @@ class _AlertEditorState extends State<_AlertEditor> {
             if (_saveError != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: Text(
+                child: TText(
                   _saveError!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
@@ -2099,13 +2173,13 @@ class _AlertEditorState extends State<_AlertEditor> {
                 children: [
                   TextButton(
                     onPressed: _isSaving ? null : () => Navigator.pop(context),
-                    child: const Text('Annulla'),
+                    child: const TText('Annulla'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: _isSaving ? null : _save,
                     icon: const Icon(Icons.save_outlined),
-                    label: const Text('Salva avviso'),
+                    label: const TText('Salva avviso'),
                   ),
                 ],
               ),
@@ -2187,9 +2261,9 @@ class _AdminEmpty extends StatelessWidget {
         children: [
           const Icon(Icons.inbox_outlined, color: JivaioColors.muted, size: 32),
           const SizedBox(height: 9),
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          TText(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 5),
-          Text(
+          TText(
             text,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,

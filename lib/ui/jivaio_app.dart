@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../i18n/app_language.dart';
+
 import '../data/jivaio_store.dart';
 import '../theme/jivaio_theme.dart';
 
@@ -24,11 +26,11 @@ class PublicScaffold extends StatelessWidget {
               builder: (context, _) => store.loadError == null
                   ? const SizedBox.shrink()
                   : MaterialBanner(
-                      content: Text(store.loadError!),
+                      content: TText(store.loadError!),
                       actions: [
                         TextButton(
                           onPressed: () => store.refreshCloud(),
-                          child: const Text('Riprova'),
+                          child: const TText('Riprova'),
                         ),
                       ],
                     ),
@@ -62,14 +64,17 @@ class _TopNavigation extends StatelessWidget {
                 border: Border.all(color: JivaioColors.border),
               ),
               child: Row(
+                textDirection: TextDirection.ltr,
                 children: [
                   const BrandMark(size: 34),
                   const SizedBox(width: 10),
-                  Text(
+                  TText(
                     'JiVaio',
                     style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(fontSize: 21),
                   ),
+                  const Spacer(),
+                  const LanguageButton(),
                 ],
               ),
             ),
@@ -99,7 +104,7 @@ class _TopNavigation extends StatelessWidget {
                   children: [
                     const BrandMark(),
                     const SizedBox(width: 12),
-                    Text(
+                    TText(
                       'JiVaio',
                       style: Theme.of(context).textTheme.titleLarge
                           ?.copyWith(fontSize: 25),
@@ -120,6 +125,8 @@ class _TopNavigation extends StatelessWidget {
                       route: '/alerts',
                       selected: selected == '/alerts',
                     ),
+                    const SizedBox(width: 8),
+                    const LanguageButton(),
                   ],
                 ),
               ),
@@ -161,7 +168,7 @@ class _NavLink extends StatelessWidget {
             fontSize: 15,
           ),
         ),
-        child: Text(label),
+        child: TText(label),
       ),
     );
   }
@@ -188,21 +195,21 @@ class _MobileNavigation extends StatelessWidget {
           onDestinationSelected: (i) =>
               Navigator.of(context)
                   .pushReplacementNamed(['/', '/lines', '/alerts'][i]),
-          destinations: const [
+          destinations: [
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
               selectedIcon: Icon(Icons.home),
-              label: 'Home',
+              label: tr(context, 'Home'),
             ),
             NavigationDestination(
               icon: Icon(Icons.directions_bus_outlined),
               selectedIcon: Icon(Icons.directions_bus),
-              label: 'Linee',
+              label: tr(context, 'Linee'),
             ),
             NavigationDestination(
               icon: Icon(Icons.campaign_outlined),
               selectedIcon: Icon(Icons.campaign),
-              label: 'Avvisi',
+              label: tr(context, 'Avvisi'),
             ),
           ],
         );
@@ -283,9 +290,9 @@ class PageHeading extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: Theme.of(context).textTheme.headlineMedium),
+              TText(title, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 6),
-              Text(
+              TText(
                 subtitle,
                 style: Theme.of(context).textTheme.bodyLarge
                     ?.copyWith(color: JivaioColors.secondary),
@@ -318,7 +325,7 @@ class PreviewNotice extends StatelessWidget {
           const Icon(Icons.info_outline, size: 19, color: Color(0xFF95620B)),
           const SizedBox(width: 9),
           Expanded(
-            child: Text(
+            child: TText(
               store.usesCloud
                   ? 'Orari in aggiornamento: verifica eventuali variazioni sui canali ufficiali AMA.'
                   : 'Dati di anteprima: gli orari locali provengono da un archivio precedente e vanno aggiornati prima della pubblicazione.',
