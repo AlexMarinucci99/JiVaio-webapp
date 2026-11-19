@@ -205,53 +205,81 @@ class _MobileNavigation extends StatelessWidget {
         ];
         return SafeArea(
           top: false,
-          minimum: const EdgeInsets.fromLTRB(14, 6, 14, 10),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(26),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
+          minimum: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .90),
-                  borderRadius: BorderRadius.circular(26),
-                  border: Border.all(color: JivaioColors.border),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14182C45),
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.all(6),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < labels.length; i++)
-                      Expanded(
-                        child: Semantics(
-                          selected: i == index,
-                          child: TextButton(
-                            onPressed: () =>
-                                Navigator.of(context)
-                                    .pushReplacementNamed(routes[i]),
-                            style: TextButton.styleFrom(
-                              foregroundColor: i == index
-                                  ? JivaioColors.navy
-                                  : JivaioColors.secondary,
-                              backgroundColor: i == index
-                                  ? JivaioColors.blueLight
-                                  : Colors.transparent,
-                              minimumSize: const Size(48, 58),
-                              padding: const EdgeInsets.symmetric(vertical: 5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(icons[i], size: 22),
-                                const SizedBox(height: 3),
-                                Text(labels[i]),
-                              ],
-                            ),
-                          ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: JivaioColors.surface.withValues(alpha: .72),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: JivaioColors.surface.withValues(alpha: .90),
                         ),
                       ),
-                  ],
+                      padding: const EdgeInsets.all(3),
+                      child: Row(
+                        children: [
+                          for (var i = 0; i < labels.length; i++)
+                            Expanded(
+                              child: Semantics(
+                                selected: i == index,
+                                child: TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context)
+                                          .pushReplacementNamed(routes[i]),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: i == index
+                                        ? JivaioColors.navy
+                                        : JivaioColors.secondary,
+                                    backgroundColor: i == index
+                                        ? JivaioColors.blue.withValues(
+                                            alpha: .11,
+                                          )
+                                        : Colors.transparent,
+                                    minimumSize: const Size(48, 48),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 3,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(icons[i], size: 19),
+                                      const SizedBox(height: 1),
+                                      Text(labels[i], maxLines: 1),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
