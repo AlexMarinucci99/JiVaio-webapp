@@ -30,187 +30,227 @@ class _AdminPageState extends State<AdminPage> {
   Widget build(BuildContext context) {
     return PublicScaffold(
       store: widget.store,
+      showBrandMark: false,
+      flatNavigation: true,
       child: AnimatedBuilder(
         animation: widget.store,
-        builder: (context, _) => PageFrame(
-          width: 1180,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
+        builder: (context, _) => Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1228),
+            child: CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                  sliver: SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TText(
-                          'Gestione JiVaio',
-                          style: Theme.of(context).textTheme.headlineSmall,
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 12,
+                          alignment: WrapAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                TText(
+                                  'Gestione JiVaio',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall,
+                                ),
+                                const SizedBox(height: 5),
+                                TText(
+                                  widget.store.usesCloud
+                                      ? 'Modifica i dati condivisi tra i dispositivi.'
+                                      : 'Modifica i dati di anteprima dal browser.',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ],
+                            ),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _chooseBackupFile,
+                                  icon: const Icon(Icons.upload_file_outlined),
+                                  label: const TText('Importa backup'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: _exportSnapshot,
+                                  icon: const Icon(Icons.download_outlined),
+                                  label: const TText('Esporta backup'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: widget.onSignOut,
+                                  icon: const Icon(Icons.logout),
+                                  label: const TText('Esci'),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 5),
-                        TText(
-                          widget.store.usesCloud
-                              ? 'Modifica i dati condivisi tra i dispositivi.'
-                              : 'Modifica i dati di anteprima dal browser.',
-                          style: Theme.of(context).textTheme.bodyLarge,
+                        const SizedBox(height: 18),
+                        _AdminNotice(usesCloud: widget.store.usesCloud),
+                        const SizedBox(height: 20),
+                        SegmentedButton<int>(
+                          segments: const [
+                            ButtonSegment(
+                              value: 0,
+                              label: TText('Linee'),
+                              icon: Icon(Icons.directions_bus_outlined),
+                            ),
+                            ButtonSegment(
+                              value: 1,
+                              label: TText('Avvisi'),
+                              icon: Icon(Icons.campaign_outlined),
+                            ),
+                          ],
+                          selected: {_tab},
+                          onSelectionChanged: (value) =>
+                              setState(() => _tab = value.first),
                         ),
+                        const SizedBox(height: 18),
                       ],
                     ),
                   ),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: _chooseBackupFile,
-                        icon: const Icon(Icons.upload_file_outlined),
-                        label: const TText('Importa backup'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _exportSnapshot,
-                        icon: const Icon(Icons.download_outlined),
-                        label: const TText('Esporta backup'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: widget.onSignOut,
-                        icon: const Icon(Icons.logout),
-                        label: const TText('Esci'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              _AdminNotice(usesCloud: widget.store.usesCloud),
-              const SizedBox(height: 20),
-              SegmentedButton<int>(
-                segments: const [
-                  ButtonSegment(
-                    value: 0,
-                    label: TText('Linee'),
-                    icon: Icon(Icons.directions_bus_outlined),
-                  ),
-                  ButtonSegment(
-                    value: 1,
-                    label: TText('Avvisi'),
-                    icon: Icon(Icons.campaign_outlined),
-                  ),
-                ],
-                selected: {_tab},
-                onSelectionChanged: (value) =>
-                    setState(() => _tab = value.first),
-              ),
-              const SizedBox(height: 18),
-              if (_tab == 0) _linesPanel(context) else _alertsPanel(context),
-              const SizedBox(height: 26),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).pushReplacementNamed('/lines'),
-                  icon: const Icon(Icons.open_in_new),
-                  label: const TText('Apri anteprima pubblica'),
                 ),
-              ),
-            ],
+                if (_tab == 0)
+                  ..._linesPanel(context)
+                else
+                  ..._alertsPanel(context),
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    26,
+                    24,
+                    52 + MediaQuery.paddingOf(context).bottom,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            Navigator.of(context)
+                                .pushReplacementNamed('/lines'),
+                        icon: const Icon(Icons.open_in_new),
+                        label: const TText('Apri anteprima pubblica'),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _linesPanel(BuildContext context) {
+  List<Widget> _linesPanel(BuildContext context) {
     final lines = [...widget.store.lines]
       ..sort((a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: TText(
-                '${lines.length} linee',
-                style: Theme.of(context).textTheme.titleMedium,
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        sliver: SliverToBoxAdapter(
+          child: Row(
+            children: [
+              Expanded(
+                child: TText(
+                  '${lines.length} linee',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: () => _editLine(),
+                icon: const Icon(Icons.add),
+                label: const TText('Nuova linea'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+      if (lines.isEmpty)
+        const SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverToBoxAdapter(
+            child: _AdminEmpty(
+              title: 'Non ci sono linee',
+              text: 'Aggiungi la prima linea o importa il GTFS aggiornato.',
+            ),
+          ),
+        )
+      else
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList.builder(
+            itemCount: lines.length,
+            itemBuilder: (context, i) => _AdminListItem(
+              child: _LineAdminRow(
+                line: lines[i],
+                onEdit: () => _editLine(lines[i]),
+                onDelete: () => _deleteLine(lines[i]),
+                onToggleVisibility: () => _toggleVisibility(lines[i]),
               ),
             ),
-            FilledButton.icon(
-              onPressed: () => _editLine(),
-              icon: const Icon(Icons.add),
-              label: const TText('Nuova linea'),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
-        if (lines.isEmpty) ...[
-          const _AdminEmpty(
-            title: 'Non ci sono linee',
-            text: 'Aggiungi la prima linea o importa il GTFS aggiornato.',
-          ),
-        ] else ...[
-          Card(
-            child: Column(
-              children: [
-                for (var i = 0; i < lines.length; i++) ...[
-                  _LineAdminRow(
-                    line: lines[i],
-                    onEdit: () => _editLine(lines[i]),
-                    onDelete: () => _deleteLine(lines[i]),
-                    onToggleVisibility: () => _toggleVisibility(lines[i]),
-                  ),
-                  if (i != lines.length - 1) const Divider(height: 1),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
+    ];
   }
 
-  Widget _alertsPanel(BuildContext context) {
+  List<Widget> _alertsPanel(BuildContext context) {
     final alerts = [...widget.store.alerts]
       ..sort((a, b) => b.startsAt.compareTo(a.startsAt));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: TText(
-                '${alerts.length} avvisi',
-                style: Theme.of(context).textTheme.titleMedium,
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        sliver: SliverToBoxAdapter(
+          child: Row(
+            children: [
+              Expanded(
+                child: TText(
+                  '${alerts.length} avvisi',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: () => _editAlert(),
+                icon: const Icon(Icons.add),
+                label: const TText('Nuovo avviso'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+      if (alerts.isEmpty)
+        const SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverToBoxAdapter(
+            child: _AdminEmpty(
+              title: 'Nessun avviso',
+              text: 'Crea un avviso quando il servizio subisce modifiche.',
+            ),
+          ),
+        )
+      else
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList.builder(
+            itemCount: alerts.length,
+            itemBuilder: (context, i) => _AdminListItem(
+              child: _AlertAdminRow(
+                alert: alerts[i],
+                onEdit: () => _editAlert(alerts[i]),
+                onDelete: () => _deleteAlert(alerts[i]),
               ),
             ),
-            FilledButton.icon(
-              onPressed: () => _editAlert(),
-              icon: const Icon(Icons.add),
-              label: const TText('Nuovo avviso'),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
-        if (alerts.isEmpty) ...[
-          const _AdminEmpty(
-            title: 'Nessun avviso',
-            text: 'Crea un avviso quando il servizio subisce modifiche.',
-          ),
-        ] else ...[
-          Card(
-            child: Column(
-              children: [
-                for (var i = 0; i < alerts.length; i++) ...[
-                  _AlertAdminRow(
-                    alert: alerts[i],
-                    onEdit: () => _editAlert(alerts[i]),
-                    onDelete: () => _deleteAlert(alerts[i]),
-                  ),
-                  if (i != alerts.length - 1) const Divider(height: 1),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
+    ];
   }
 
   Future<void> _editLine([TransitLine? line]) async {
@@ -616,6 +656,20 @@ class _AdminPageState extends State<AdminPage> {
       );
     }
   }
+}
+
+class _AdminListItem extends StatelessWidget {
+  const _AdminListItem({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(
+      color: JivaioColors.surface,
+      border: Border(bottom: BorderSide(color: JivaioColors.border)),
+    ),
+    child: child,
+  );
 }
 
 class _AdminNotice extends StatelessWidget {

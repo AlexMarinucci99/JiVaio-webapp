@@ -12,12 +12,14 @@ class PublicScaffold extends StatelessWidget {
     required this.store,
     required this.child,
     this.showBrandMark = true,
+    this.flatNavigation = false,
     super.key,
   });
 
   final JivaioStore store;
   final Widget child;
   final bool showBrandMark;
+  final bool flatNavigation;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,11 @@ class PublicScaffold extends StatelessWidget {
         bottom: false,
         child: Column(
           children: [
-            _TopNavigation(selected: selected, showBrandMark: showBrandMark),
+            _TopNavigation(
+              selected: selected,
+              showBrandMark: showBrandMark,
+              flat: flatNavigation,
+            ),
             AnimatedBuilder(
               animation: store,
               builder: (context, _) => store.loadError == null
@@ -48,15 +54,23 @@ class PublicScaffold extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _MobileNavigation(selected: selected),
+      bottomNavigationBar: _MobileNavigation(
+        selected: selected,
+        flat: flatNavigation,
+      ),
     );
   }
 }
 
 class _TopNavigation extends StatelessWidget {
-  const _TopNavigation({required this.selected, required this.showBrandMark});
+  const _TopNavigation({
+    required this.selected,
+    required this.showBrandMark,
+    required this.flat,
+  });
   final String selected;
   final bool showBrandMark;
+  final bool flat;
 
   @override
   Widget build(BuildContext context) {
@@ -101,16 +115,20 @@ class _TopNavigation extends StatelessWidget {
                 height: 68,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .93),
+                  color: flat
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: .93),
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: JivaioColors.border),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x101B3B6B),
-                      blurRadius: 18,
-                      offset: Offset(0, 7),
-                    ),
-                  ],
+                  boxShadow: flat
+                      ? null
+                      : const [
+                          BoxShadow(
+                            color: Color(0x101B3B6B),
+                            blurRadius: 18,
+                            offset: Offset(0, 7),
+                          ),
+                        ],
                 ),
                 child: Row(
                   children: [
@@ -189,8 +207,9 @@ class _NavLink extends StatelessWidget {
 }
 
 class _MobileNavigation extends StatelessWidget {
-  const _MobileNavigation({required this.selected});
+  const _MobileNavigation({required this.selected, required this.flat});
   final String selected;
+  final bool flat;
 
   @override
   Widget build(BuildContext context) {
@@ -221,21 +240,26 @@ class _MobileNavigation extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x14182C45),
-                      blurRadius: 16,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+                  boxShadow: flat
+                      ? null
+                      : const [
+                          BoxShadow(
+                            color: Color(0x14182C45),
+                            blurRadius: 16,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: BackdropFilter(
+                    enabled: !flat,
                     filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: JivaioColors.surface.withValues(alpha: .72),
+                        color: flat
+                            ? JivaioColors.surface
+                            : JivaioColors.surface.withValues(alpha: .72),
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
                           color: JivaioColors.surface.withValues(alpha: .90),

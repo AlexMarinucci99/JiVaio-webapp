@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/jivaio_store.dart';
 import '../data/supabase_config.dart';
 import 'admin_page.dart';
+import 'admin_theme.dart';
 
 class AdminAccessPage extends StatefulWidget {
   const AdminAccessPage({required this.store, super.key});
@@ -134,7 +135,12 @@ class _AdminAccessPageState extends State<AdminAccessPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Theme(
+    data: adminTheme(Theme.of(context)),
+    child: Builder(builder: _buildContent),
+  );
+
+  Widget _buildContent(BuildContext context) {
     if (SupabaseConfig.localAdminPreviewEnabled) {
       return AdminPage(
         store: widget.store,

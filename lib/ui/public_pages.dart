@@ -8,6 +8,7 @@ import '../data/jivaio_store.dart';
 import '../features/home/presentation/widgets/home_hero.dart';
 import '../models/transit_models.dart';
 import '../services/upcoming_departures.dart';
+import '../services/line_stop_search.dart';
 import '../theme/jivaio_theme.dart';
 import 'jivaio_app.dart';
 
@@ -116,12 +117,15 @@ class _LinesPageState extends State<LinesPage> {
       child: AnimatedBuilder(
         animation: widget.store,
         builder: (context, _) {
-          final pairs = _directionPairs(widget.store.visibleLines).where((
-            pair,
-          ) {
-            final query = _search.text.trim().toLowerCase();
+          final query = _search.text.trim().toLowerCase();
+          final lines = widget.store.visibleLines;
+          final matchingStopLines = query.isEmpty
+              ? <TransitLine>{}
+              : lines.where((line) => lineHasMatchingStop(line, query)).toSet();
+          final pairs = _directionPairs(lines).where((pair) {
             final matchesSearch =
                 query.isEmpty ||
+                matchingStopLines.contains(pair.line) ||
                 '${pair.line.code} ${pair.line.name} ${pair.direction.originName} ${pair.direction.destinationName}'
                     .toLowerCase()
                     .contains(query);
@@ -857,8 +861,9 @@ class AlertCard extends StatelessWidget {
         : alert.severity == 'warning'
         ? 'Modifica servizio'
         : 'Informazione';
-    final date = MaterialLocalizations.of(context)
-        .formatMediumDate(alert.startsAt);
+    final date = compact
+        ? null
+        : MaterialLocalizations.of(context).formatMediumDate(alert.startsAt);
     return Card(
       child: Padding(
         padding: EdgeInsets.all(compact ? 18 : 22),
@@ -909,29 +914,34 @@ class AlertCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
-                  const SizedBox(height: 11),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 7,
-                    children: [
-                      TText(
-                        'Dal $date',
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      if (alert.affectedLines.isNotEmpty)
-                        TText(
-                          'Linee ${alert.affectedLines.join(', ')}',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      if (alert.sourceName != null)
-                        TText(
-                          alert.sourceName!,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                    ],
-                  ),
+                  if (!compact ||
+                      alert.affectedLines.isNotEmpty ||
+                      alert.sourceName != null) ...[
+                    const SizedBox(height: 11),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 7,
+                      children: [
+                        if (date != null)
+                          TText(
+                            'Dal $date',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        if (alert.affectedLines.isNotEmpty)
+                          TText(
+                            'Linee ${alert.affectedLines.join(', ')}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        if (alert.sourceName != null)
+                          TText(
+                            alert.sourceName!,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                      ],
+                    ),
+                  ],
                   if (alert.sourceUrl != null && !compact) ...[
                     const SizedBox(height: 7),
                     SelectableText(
