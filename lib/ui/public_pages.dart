@@ -261,7 +261,7 @@ class _LineGridState extends State<_LineGrid> with WidgetsBindingObserver {
           children: [
             for (final pair in widget.pairs)
               SizedBox(
-                width: width,
+                width: width.clamp(0.0, 520.0),
                 child: _LineCard(pair: pair, store: widget.store, now: now),
               ),
           ],
@@ -324,15 +324,15 @@ class _LineCard extends StatelessWidget {
     final upcoming = upcomingDepartures(matchingDirections, now);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _LineBadge(code: line.code, size: 58),
-                const SizedBox(width: 14),
+                _LineBadge(code: line.code, size: 48),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,37 +351,47 @@ class _LineCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 7),
-                      _SmallPill(
-                        icon: Icons.location_on,
-                        label:
-                            '${direction.stops.isEmpty ? line.stopCount : direction.stops.length} fermate',
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _SmallPill(
+                            icon: Icons.location_on,
+                            label:
+                                '${direction.stops.isEmpty ? line.stopCount : direction.stops.length} fermate',
+                          ),
+                          if (direction.serviceLabel.isNotEmpty ||
+                              line.isCircular)
+                            _SmallPill(
+                              icon: Icons.calendar_month_outlined,
+                              label: line.isCircular
+                                  ? _directionServiceTitle(
+                                      line,
+                                      direction,
+                                      directionIndex,
+                                    )
+                                  : matchingDirections.length > 1
+                                  ? 'Calendari diversi'
+                                  : direction.serviceLabel,
+                            ),
+                        ],
                       ),
-                      if (direction.serviceLabel.isNotEmpty ||
-                          line.isCircular) ...[
-                        const SizedBox(height: 6),
-                        _SmallPill(
-                          icon: Icons.calendar_month_outlined,
-                          label: line.isCircular
-                              ? _directionServiceTitle(
-                                  line,
-                                  direction,
-                                  directionIndex,
-                                )
-                              : matchingDirections.length > 1
-                              ? 'Calendari diversi'
-                              : direction.serviceLabel,
-                        ),
-                      ],
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             if (!line.isCircular) ...[
-              _DirectionBox(
-                origin: direction.originName,
-                destination: direction.destinationName,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: _DirectionBox(
+                    origin: direction.originName,
+                    destination: direction.destinationName,
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
             ],
@@ -392,7 +402,7 @@ class _LineCard extends StatelessWidget {
                 color: JivaioColors.muted,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             if (upcoming.departures.isEmpty)
               TText(
                 switch (upcoming.emptyReason) {
@@ -422,10 +432,15 @@ class _LineCard extends StatelessWidget {
                     ),
                 ],
               ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
               child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                ),
                 onPressed: () => Navigator.of(context).pushNamed(
                   '/line/${Uri.encodeComponent(line.id)}',
                   arguments: upcoming.departures.isEmpty
@@ -969,7 +984,7 @@ class _DirectionBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         border: Border.all(color: JivaioColors.border),
         borderRadius: BorderRadius.circular(15),
@@ -1001,14 +1016,18 @@ class _DirectionBox extends StatelessWidget {
             ),
           ),
           Container(
-            width: 42,
-            height: 42,
+            width: 28,
+            height: 28,
             margin: const EdgeInsets.symmetric(horizontal: 8),
             decoration: const BoxDecoration(
               color: JivaioColors.blueLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_forward, color: JivaioColors.blue),
+            child: const Icon(
+              Icons.arrow_forward,
+              color: JivaioColors.blue,
+              size: 18,
+            ),
           ),
           Expanded(
             child: Column(
@@ -1085,8 +1104,8 @@ class _TimePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: EdgeInsets.symmetric(
-      horizontal: large ? 14 : 12,
-      vertical: large ? 9 : 8,
+      horizontal: large ? 14 : 10,
+      vertical: large ? 9 : 6,
     ),
     decoration: BoxDecoration(
       color: JivaioColors.blue,
