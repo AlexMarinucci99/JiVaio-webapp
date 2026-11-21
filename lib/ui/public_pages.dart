@@ -8,6 +8,7 @@ import '../data/jivaio_store.dart';
 import '../features/home/presentation/widgets/home_hero.dart';
 import '../models/transit_models.dart';
 import '../services/upcoming_departures.dart';
+import '../services/timetable_order.dart';
 import '../services/line_stop_search.dart';
 import '../theme/jivaio_theme.dart';
 import 'jivaio_app.dart';
@@ -620,7 +621,8 @@ class _LineDetailPageState extends State<LineDetailPage> {
                                   line: line,
                                   isCircular: line.isCircular,
                                   initialTripIndex:
-                                      _selectedTrips.value[direction.id] ?? 0,
+                                      _selectedTrips.value[direction.id] ??
+                                      _firstTripIndex(direction),
                                   onTripSelected: (index) {
                                     _selectedTrips.value = {
                                       ..._selectedTrips.value,
@@ -644,6 +646,13 @@ class _LineDetailPageState extends State<LineDetailPage> {
   }
 }
 
+int _firstTripIndex(TransitDirection direction) {
+  if (direction.trips.isEmpty) return 0;
+  return timetableOrder(
+    direction.trips.map((trip) => trip.departureTime).toList(),
+  ).first;
+}
+
 class _SelectedTripNote extends StatelessWidget {
   const _SelectedTripNote({
     required this.directions,
@@ -663,10 +672,9 @@ class _SelectedTripNote extends StatelessWidget {
         final direction =
             directions[tabs.index.clamp(0, directions.length - 1)];
         if (direction.trips.isEmpty) return const SizedBox.shrink();
-        final index = (selectedTrips.value[direction.id] ?? 0).clamp(
-          0,
-          direction.trips.length - 1,
-        );
+        final index =
+            (selectedTrips.value[direction.id] ?? _firstTripIndex(direction))
+                .clamp(0, direction.trips.length - 1);
         final note = direction.trips[index].note.trim();
         if (note.isEmpty) return const SizedBox.shrink();
         return Padding(
@@ -716,6 +724,10 @@ class _DirectionDetailState extends State<_DirectionDetail> {
   Widget build(BuildContext context) {
     final direction = widget.direction;
     final trips = direction.trips;
+    final tripOrder = timetableOrder(
+      trips.map((trip) => trip.departureTime).toList(),
+    );
+    final departureOrder = timetableOrder(direction.departures);
     final selectedTrip = trips.isEmpty
         ? null
         : trips[_selectedTripIndex.clamp(0, trips.length - 1).toInt()];
@@ -743,20 +755,20 @@ class _DirectionDetailState extends State<_DirectionDetail> {
                     spacing: 9,
                     runSpacing: 9,
                     children: trips.isEmpty
-                        ? direction.departures
+                        ? departureOrder
                               .map(
-                                (time) => _TimePill(
+                                (index) => _TimePill(
                                   time: _departureLabel(
                                     widget.line,
                                     direction,
-                                    time,
+                                    direction.departures[index],
                                   ),
                                   large: true,
                                 ),
                               )
                               .toList()
                         : [
-                            for (var i = 0; i < trips.length; i++)
+                            for (final i in tripOrder)
                               ChoiceChip(
                                 label: TText(
                                   _tripDepartureLabel(
