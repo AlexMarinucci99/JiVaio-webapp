@@ -33,6 +33,7 @@ Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza 
 - `/admin` è separato dalla navigazione pubblica e richiede un account Supabase presente in `admin_users`; senza configurazione Supabase mostra solo la schermata di configurazione.
 - Le modifiche salvate nel gestionale sono condivise tramite Supabase. I preferiti restano specifici del browser.
 - Il gestionale esporta un backup JSON completo (linee e avvisi) oppure di una singola linea.
+- La sincronizzazione AMA acquisisce gli avvisi Viabilità come bozze da revisionare. Gli aggiornamenti della fonte sono segnalati senza sovrascrivere le modifiche amministrative; la sincronizzazione automatica può essere attivata o sospesa nel gestionale.
 - Ogni linea può essere mostrata o nascosta agli utenti: la scelta è salvata su Supabase e applicata anche tramite le policy di accesso.
 - Da un backup si può importare tutto il contenuto oppure una singola linea, anche se il file contiene più linee. L'importazione unisce i dati: gli ID presenti nella selezione aggiornano i record corrispondenti; gli altri record e i preferiti locali restano.
 - Le migrazioni in `supabase/migrations/` definiscono il database; quelle iniziali sono state applicate via SQL Editor, quindi la cronologia CLI non è inizializzata: non eseguire `supabase db push` prima di sincronizzarla. `supabase/bootstrap_admin.sql` mostra come autorizzare manualmente il proprio utente.
@@ -66,3 +67,9 @@ La versione web può essere compilata con `flutter build web --release --base-hr
 ## Concept grafici
 
 Le immagini di riferimento sono in [`design/concepts/`](design/concepts/). La lista linee riprende la schermata Android condivisa e la adatta a desktop e mobile.
+
+## Sincronizzazione avvisi AMA
+
+La funzione `ama-sync` legge le pubblicazioni della categoria Viabilità tramite le API pubbliche AMA. I nuovi avvisi sono bozze e non vengono pubblicati automaticamente; il gestionale permette di eseguire un controllo manuale, consultare le variazioni e attivare il controllo periodico. La data di pubblicazione della fonte non costituisce una data di scadenza. Le variazioni non sostituiscono i contenuti modificati dall'amministratore.
+
+La migrazione dedicata definisce metadati privati e funzioni di accesso; lo script operativo `supabase/operations/ama_sync_schedule.sql` imposta un controllo ogni 15 minuti dopo la configurazione dei segreti nel Vault. **Non inserire credenziali nel repository o nel client.** Il job usa una chiave service-role: come indicato dalla documentazione Supabase, `pg_net` mantiene temporaneamente l'header decifrato nella coda delle richieste, accessibile ai ruoli con accesso al database. Limitare l'accesso al database e trattare la chiave come privilegiata. La sincronizzazione iniziale può creare fino a 100 bozze; un'interruzione che supera 100 pubblicazioni modificate richiede un recupero manuale.

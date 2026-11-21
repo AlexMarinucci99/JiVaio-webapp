@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../i18n/app_language.dart';
 
@@ -25,6 +26,8 @@ class AdminPage extends StatefulWidget {
 
 class _AdminPageState extends State<AdminPage> {
   int _tab = 0;
+  bool _syncingAma = false;
+  int _amaStatusVersion = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +228,39 @@ class _AdminPageState extends State<AdminPage> {
           ),
         ),
       ),
+      if (widget.store.usesCloud)
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          sliver: SliverToBoxAdapter(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _syncingAma ? null : _syncAma,
+                  icon: const Icon(Icons.sync),
+                  label: TText(
+                    _syncingAma
+                        ? 'Sincronizzazione in corso'
+                        : 'Sincronizza avvisi AMA',
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _showAmaUpdates,
+                  icon: const Icon(Icons.fact_check_outlined),
+                  label: const TText('Aggiornamenti AMA da verificare'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      if (widget.store.usesCloud)
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          sliver: SliverToBoxAdapter(
+            child: _AmaSyncStatus(key: ValueKey(_amaStatusVersion)),
+          ),
+        ),
       const SliverToBoxAdapter(child: SizedBox(height: 12)),
       if (alerts.isEmpty)
         const SliverPadding(
@@ -251,6 +287,138 @@ class _AdminPageState extends State<AdminPage> {
           ),
         ),
     ];
+  }
+
+  Future<void> _showAmaUpdates() async {
+    try {
+      final rows = await Supabase.instance.client.rpc(
+        'jivaio_ama_pending_updates',
+      );
+      if (!mounted) return;
+      final updates = List<Map<String, dynamic>>.from(rows as List);
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const TText('Aggiornamenti AMA da verificare'),
+          content: SizedBox(
+            width: 650,
+            child: updates.isEmpty
+                ? const TText('Nessun aggiornamento da verificare.')
+                : ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: updates.length,
+                    separatorBuilder: (_, _) => const Divider(),
+                    itemBuilder: (context, index) {
+                      final update = updates[index];
+                      final payload = Map<String, dynamic>.from(
+                        update['source_payload'] as Map,
+                      );
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TText(
+                            payload['title'] as String? ?? '',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          SelectableText(payload['details'] as String? ?? ''),
+                          const SizedBox(height: 8),
+                          SelectableText(payload['sourceUrl'] as String? ?? ''),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () async {
+                              try {
+                                final acknowledged = await Supabase
+                                    .instance
+                                    .client
+                                    .rpc(
+                                      'jivaio_ama_ack_update',
+                                      params: {
+                                        'p_external_id': update['external_id'],
+                                        'p_modified_at':
+                                            update['source_modified_at'],
+                                        'p_source_payload': payload,
+                                      },
+                                    );
+                                if (!dialogContext.mounted) return;
+                                Navigator.pop(dialogContext);
+                                if (acknowledged != true) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: TText(
+                                        'La fonte è cambiata: riapri gli aggiornamenti.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (_) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: TText(
+                                      'Operazione non riuscita. Riprova.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const TText('Segna come verificato'),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const TText('Chiudi'),
+            ),
+          ],
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TText('Impossibile caricare gli aggiornamenti AMA.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _syncAma() async {
+    if (_syncingAma) return;
+    setState(() => _syncingAma = true);
+    try {
+      await Supabase.instance.client.functions.invoke(
+        'ama-sync',
+        body: <String, dynamic>{},
+      );
+      await widget.store.refreshCloud(throwOnError: true);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TText(
+            'Sincronizzazione completata. Controlla le bozze AMA.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TText('Sincronizzazione non riuscita. Riprova più tardi.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _syncingAma = false;
+          _amaStatusVersion++;
+        });
+      }
+    }
   }
 
   Future<void> _editLine([TransitLine? line]) async {
@@ -658,6 +826,83 @@ class _AdminPageState extends State<AdminPage> {
   }
 }
 
+class _AmaSyncStatus extends StatefulWidget {
+  const _AmaSyncStatus({super.key});
+
+  @override
+  State<_AmaSyncStatus> createState() => _AmaSyncStatusState();
+}
+
+class _AmaSyncStatusState extends State<_AmaSyncStatus> {
+  Map<String, dynamic>? _status;
+  bool _busy = false;
+  bool _error = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final result = await Supabase.instance.client.rpc('jivaio_ama_status');
+      if (mounted) {
+        setState(() {
+          _status = Map<String, dynamic>.from(result as Map);
+          _error = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = true);
+    }
+  }
+
+  Future<void> _setEnabled(bool value) async {
+    setState(() => _busy = true);
+    try {
+      await Supabase.instance.client.rpc(
+        'jivaio_ama_set_enabled',
+        params: {'p_enabled': value},
+      );
+      await _load();
+    } catch (_) {
+      if (mounted) setState(() => _error = true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = _status;
+    if (_error) return const TText('Stato AMA non disponibile.');
+    if (status == null) return const TText('Caricamento stato AMA…');
+    final success = DateTime.tryParse(status['last_success'] as String? ?? '')
+        ?.toLocal();
+    final label = success == null
+        ? 'Nessuna sincronizzazione completata'
+        : 'Ultima sincronizzazione: ${_formatDate(success)} ${success.hour.toString().padLeft(2, '0')}:${success.minute.toString().padLeft(2, '0')}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const TText('Sincronizzazione automatica AMA'),
+          value: status['automatic_enabled'] == true,
+          onChanged: _busy ? null : _setEnabled,
+        ),
+        TText(label),
+        if (status['last_error'] != null)
+          TText(
+            status['last_error'] as String,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+      ],
+    );
+  }
+}
+
 class _AdminListItem extends StatelessWidget {
   const _AdminListItem({required this.child});
   final Widget child;
@@ -825,7 +1070,7 @@ class _AlertAdminRow extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               TText(
-                '${alert.isPublished ? 'Pubblicato' : 'Bozza'} · ${alert.severity} · ${alert.affectedLines.isEmpty ? 'tutte le linee' : alert.affectedLines.join(', ')}',
+                '${alert.isPublished ? 'Pubblicato' : 'Bozza'} · ${alert.sourceName?.isNotEmpty == true ? alert.sourceName! : 'Manuale'} · ${alert.severity} · ${alert.affectedLines.isEmpty ? 'tutte le linee' : alert.affectedLines.join(', ')}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
