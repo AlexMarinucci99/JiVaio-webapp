@@ -270,15 +270,33 @@ class _LineGridState extends State<_LineGrid> with WidgetsBindingObserver {
         final width = columns == 2
             ? (constraints.maxWidth - 18) / 2
             : constraints.maxWidth;
-        return Wrap(
-          spacing: 18,
-          runSpacing: 18,
+        return Column(
           children: [
-            for (final pair in widget.pairs)
-              SizedBox(
-                width: width.clamp(0.0, 520.0),
-                child: _LineCard(pair: pair, store: widget.store, now: now),
+            for (var i = 0; i < widget.pairs.length; i += columns) ...[
+              if (i > 0) const SizedBox(height: 18),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (
+                      var j = i;
+                      j < i + columns && j < widget.pairs.length;
+                      j++
+                    ) ...[
+                      if (j > i) const SizedBox(width: 18),
+                      SizedBox(
+                        width: width.clamp(0.0, 520.0),
+                        child: _LineCard(
+                          pair: widget.pairs[j],
+                          store: widget.store,
+                          now: now,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
+            ],
           ],
         );
       },
@@ -397,19 +415,6 @@ class _LineCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            if (!line.isCircular) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: _DirectionBox(
-                    origin: direction.originName,
-                    destination: direction.destinationName,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
             TText(
               'Prossime partenze',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -448,6 +453,7 @@ class _LineCard extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: 10),
+            const Spacer(),
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton.icon(
@@ -991,89 +997,6 @@ class AlertCard extends StatelessWidget {
   }
 }
 
-class _DirectionBox extends StatelessWidget {
-  const _DirectionBox({required this.origin, required this.destination});
-  final String origin;
-  final String destination;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        border: Border.all(color: JivaioColors.border),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const TText(
-                  'Partenza',
-                  style: TextStyle(
-                    color: JivaioColors.blue,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                TText(
-                  origin,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: JivaioColors.navy,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 28,
-            height: 28,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: const BoxDecoration(
-              color: JivaioColors.blueLight,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.arrow_forward,
-              color: JivaioColors.blue,
-              size: 18,
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const TText(
-                  'Capolinea',
-                  style: TextStyle(
-                    color: JivaioColors.blue,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                TText(
-                  destination,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: const TextStyle(
-                    color: JivaioColors.navy,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SmallPill extends StatelessWidget {
   const _SmallPill({
     required this.icon,
@@ -1347,24 +1270,10 @@ String _stopTimeLabel(
 }
 
 List<_LineDirectionPair> _directionPairs(List<TransitLine> lines) => [
-  for (final line in lines) ..._uniqueDirectionPairs(line),
+  for (final line in lines)
+    if (_publicDirections(line).isNotEmpty)
+      _LineDirectionPair(line, _publicDirections(line).first),
 ];
-
-List<_LineDirectionPair> _uniqueDirectionPairs(TransitLine line) {
-  if (line.isCircular) {
-    return _publicDirections(line)
-        .map((direction) => _LineDirectionPair(line, direction))
-        .toList();
-  }
-  final seen = <String>{};
-  return [
-    for (final direction in line.directions)
-      if (seen.add(
-        '${direction.originName.trim().toLowerCase()}|${direction.destinationName.trim().toLowerCase()}',
-      ))
-        _LineDirectionPair(line, direction),
-  ];
-}
 
 List<TransitDirection> _publicDirections(TransitLine line) {
   if (line.code.trim().toUpperCase() != 'B') return line.directions;
