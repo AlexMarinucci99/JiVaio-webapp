@@ -122,15 +122,30 @@ class _LinesPageState extends State<LinesPage> {
           final matchingStopLines = query.isEmpty
               ? <TransitLine>{}
               : lines.where((line) => lineHasMatchingStop(line, query)).toSet();
-          final pairs = _directionPairs(lines).where((pair) {
-            final matchesSearch =
-                query.isEmpty ||
-                matchingStopLines.contains(pair.line) ||
-                '${pair.line.code} ${pair.line.name} ${pair.direction.originName} ${pair.direction.destinationName}'
-                    .toLowerCase()
-                    .contains(query);
-            return matchesSearch;
-          }).toList();
+          final pairs = <_LineDirectionPair>[];
+          for (final line in lines) {
+            final directions = _publicDirections(line);
+            if (directions.isEmpty) continue;
+            final matchingDirections = directions.where(
+              (direction) =>
+                  '${direction.originName} ${direction.destinationName}'
+                      .toLowerCase()
+                      .contains(query),
+            );
+            if (query.isEmpty ||
+                '${line.code} ${line.name}'.toLowerCase().contains(query) ||
+                matchingStopLines.contains(line) ||
+                matchingDirections.isNotEmpty) {
+              pairs.add(
+                _LineDirectionPair(
+                  line,
+                  matchingDirections.isEmpty
+                      ? directions.first
+                      : matchingDirections.first,
+                ),
+              );
+            }
+          }
           return PageFrame(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,7 +177,7 @@ class _LinesPageState extends State<LinesPage> {
                   ),
                 ] else ...[
                   TText(
-                    '${pairs.length} direzioni',
+                    '${pairs.length} ${pairs.length == 1 ? 'linea' : 'linee'}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
@@ -486,6 +501,7 @@ class _LineDetailPageState extends State<LineDetailPage> {
   Widget build(BuildContext context) {
     return PublicScaffold(
       store: widget.store,
+      showBrandMark: false,
       child: AnimatedBuilder(
         animation: widget.store,
         builder: (context, _) {
@@ -577,9 +593,7 @@ class _LineDetailPageState extends State<LineDetailPage> {
                                         directions[i],
                                         i,
                                       )
-                                    : (directions[i].serviceLabel.isEmpty
-                                          ? '${directions[i].originName} → ${directions[i].destinationName}'
-                                          : '${directions[i].originName} → ${directions[i].destinationName}\n${directions[i].serviceLabel}'),
+                                    : _normalDirectionTitle(directions[i], i),
                               ),
                             ),
                         ];
@@ -1359,6 +1373,21 @@ List<TransitDirection> _publicDirections(TransitLine line) {
     final label = direction.serviceLabel.trim().toLowerCase();
     return serviceId.isNotEmpty && label != 'orari generali';
   }).toList();
+}
+
+String _normalDirectionTitle(TransitDirection direction, int index) {
+  final id = direction.id.toLowerCase();
+  final isReturn =
+      id.contains('return') || id.contains('inbound') || id.startsWith('1');
+  final isOutbound = id.contains('outbound') || id.startsWith('0');
+  final name = isReturn
+      ? 'Ritorno'
+      : isOutbound
+      ? 'Andata'
+      : (index.isEven ? 'Andata' : 'Ritorno');
+  return direction.serviceLabel.isEmpty
+      ? name
+      : '$name\n${direction.serviceLabel}';
 }
 
 String _directionServiceTitle(
