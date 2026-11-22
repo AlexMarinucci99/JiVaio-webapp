@@ -25,38 +25,53 @@ class PublicScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = ModalRoute.of(context)?.settings.name ?? '/';
     final selected = path.startsWith('/line') ? '/lines' : path;
-    return Scaffold(
-      extendBody: true,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _TopNavigation(
-              selected: selected,
-              showBrandMark: showBrandMark,
-              flat: flatNavigation,
-            ),
-            AnimatedBuilder(
-              animation: store,
-              builder: (context, _) => store.loadError == null
-                  ? const SizedBox.shrink()
-                  : MaterialBanner(
-                      content: TText(store.loadError!),
-                      actions: [
-                        TextButton(
-                          onPressed: () => store.refreshCloud(),
-                          child: const TText('Riprova'),
-                        ),
-                      ],
-                    ),
-            ),
-            Expanded(child: child),
-          ],
+    final base = Theme.of(context);
+    return Theme(
+      data: base.copyWith(
+        scaffoldBackgroundColor: const Color(0xFFF9FAFC),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: JivaioColors.border),
+          ),
         ),
       ),
-      bottomNavigationBar: _MobileNavigation(
-        selected: selected,
-        flat: flatNavigation,
+      child: Scaffold(
+        extendBody: true,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              _TopNavigation(
+                selected: selected,
+                showBrandMark: showBrandMark,
+                flat: flatNavigation,
+              ),
+              AnimatedBuilder(
+                animation: store,
+                builder: (context, _) => store.loadError == null
+                    ? const SizedBox.shrink()
+                    : MaterialBanner(
+                        content: TText(store.loadError!),
+                        actions: [
+                          TextButton(
+                            onPressed: () => store.refreshCloud(),
+                            child: const TText('Riprova'),
+                          ),
+                        ],
+                      ),
+              ),
+              Expanded(child: child),
+            ],
+          ),
+        ),
+        bottomNavigationBar: _MobileNavigation(
+          selected: selected,
+          flat: flatNavigation,
+        ),
       ),
     );
   }
@@ -90,10 +105,6 @@ class _TopNavigation extends StatelessWidget {
               child: Row(
                 textDirection: TextDirection.ltr,
                 children: [
-                  if (showBrandMark) ...[
-                    const BrandMark(size: 34),
-                    const SizedBox(width: 10),
-                  ],
                   TText(
                     'JiVaio',
                     style: Theme.of(context).textTheme.titleLarge
@@ -107,7 +118,7 @@ class _TopNavigation extends StatelessWidget {
           );
         }
         return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1320),
@@ -118,7 +129,7 @@ class _TopNavigation extends StatelessWidget {
                   color: flat
                       ? Colors.white
                       : Colors.white.withValues(alpha: .93),
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: JivaioColors.border),
                   boxShadow: flat
                       ? null
@@ -132,16 +143,12 @@ class _TopNavigation extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    if (showBrandMark) ...[
-                      const BrandMark(),
-                      const SizedBox(width: 12),
-                    ],
                     TText(
                       'JiVaio',
                       style: Theme.of(context).textTheme.titleLarge
                           ?.copyWith(fontSize: 25),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 32),
                     _NavLink(
                       label: 'Home',
                       route: '/',
@@ -157,7 +164,7 @@ class _TopNavigation extends StatelessWidget {
                       route: '/alerts',
                       selected: selected == '/alerts',
                     ),
-                    const SizedBox(width: 8),
+                    const Spacer(),
                     const LanguageButton(),
                   ],
                 ),
@@ -200,7 +207,18 @@ class _NavLink extends StatelessWidget {
             fontSize: 15,
           ),
         ),
-        child: TText(label),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(switch (route) {
+              '/' => Icons.home_outlined,
+              '/lines' => Icons.directions_bus_outlined,
+              _ => Icons.notifications_none_outlined,
+            }, size: 20),
+            const SizedBox(width: 8),
+            TText(label),
+          ],
+        ),
       ),
     );
   }

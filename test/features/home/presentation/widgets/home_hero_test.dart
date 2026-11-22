@@ -42,45 +42,22 @@ void main() {
     );
   }
 
-  testWidgets('mostra i testi configurati e invoca l’azione del pulsante', (
-    tester,
-  ) async {
-    var openedLines = false;
-    await pumpHomeHero(
-      tester,
-      width: 375,
-      onOpenLines: () => openedLines = true,
+  testWidgets('la ricerca vuota apre le linee', (tester) async {
+    var opened = false;
+    await pumpHomeHero(tester, width: 375, onOpenLines: () => opened = true);
+    expect(
+      find.text(HomeHeroContent.title.replaceAll('\n', ' ')),
+      findsWidgets,
     );
-
-    expect(find.text(HomeHeroContent.title), findsWidgets);
-    expect(find.text(HomeHeroContent.description), findsWidgets);
-    expect(find.text(HomeHeroContent.buttonLabel), findsWidgets);
-    expect(find.byType(Icon), findsNothing);
-
-    await tester.tap(find.byType(FilledButton));
-    expect(openedLines, isTrue);
+    expect(find.byType(TextField), findsOneWidget);
+    await tester.tap(find.byType(IconButton));
+    expect(opened, isTrue);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('usa il layout verticale compatto su larghezza mobile', (
-    tester,
-  ) async {
-    await pumpHomeHero(tester, width: 375, onOpenLines: () {});
-
-    final layout = tester.widget<Flex>(
-      find.byKey(const Key('home-hero-layout')),
-    );
-
-    expect(layout.direction, Axis.vertical);
-  });
-
-  testWidgets('mantiene il layout orizzontale su desktop', (tester) async {
+  testWidgets('la ricerca rimane visibile su desktop', (tester) async {
     await pumpHomeHero(tester, width: 900, onOpenLines: () {});
-
-    final layout = tester.widget<Flex>(
-      find.byKey(const Key('home-hero-layout')),
-    );
-
-    expect(layout.direction, Axis.horizontal);
-    expect(find.byKey(const Key('home-hero-artwork')), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

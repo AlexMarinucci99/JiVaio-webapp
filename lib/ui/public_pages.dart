@@ -28,46 +28,92 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              PreviewNotice(store: store),
-              const SizedBox(height: 28),
               HomeHero(
                 onOpenLines: () => Navigator.of(context).pushNamed('/lines'),
               ),
-              const SizedBox(height: 28),
-              if (store.visibleAlerts.isNotEmpty) ...[
-                _SectionTitle(
-                  title: 'Avvisi di servizio',
-                  action: 'Tutti gli avvisi',
-                  onTap: () => Navigator.of(context).pushNamed('/alerts'),
-                ),
-                const SizedBox(height: 14),
-                AlertCard(alert: store.visibleAlerts.first, compact: true),
-                const SizedBox(height: 30),
-              ],
-              _SectionTitle(
-                title: 'Esplora le linee',
-                action: 'Elenco completo',
-                onTap: () => Navigator.of(context).pushNamed('/lines'),
+              const SizedBox(height: 32),
+              PreviewNotice(store: store),
+              const SizedBox(height: 32),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final lines = _HomePanel(
+                    title: 'Linee',
+                    icon: Icons.directions_bus_outlined,
+                    action: 'Elenco completo',
+                    onAction: () => Navigator.of(context).pushNamed('/lines'),
+                    children: [
+                      if (store.isLoading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (store.visibleLines.isEmpty)
+                        const TText('Nessuna linea disponibile')
+                      else
+                        for (final pair in _directionPairs(
+                          store.visibleLines,
+                        ).take(4))
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: _LineBadge(code: pair.line.code, size: 48),
+                            title: TText(
+                              pair.line.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: TText('Linea ${pair.line.code}'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).pushNamed(
+                              '/line/${Uri.encodeComponent(pair.line.id)}',
+                              arguments: pair.direction.id,
+                            ),
+                          ),
+                    ],
+                  );
+                  final alerts = _HomePanel(
+                    title: 'Avvisi di servizio',
+                    icon: Icons.notifications_none_outlined,
+                    action: 'Tutti gli avvisi',
+                    onAction: () => Navigator.of(context).pushNamed('/alerts'),
+                    children: [
+                      if (store.visibleAlerts.isEmpty)
+                        const TText('Nessun avviso disponibile')
+                      else
+                        for (final alert in store.visibleAlerts.take(2))
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(
+                              Icons.info_outline,
+                              color: JivaioColors.blue,
+                            ),
+                            title: TText(
+                              alert.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: TText(
+                              alert.summary,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () =>
+                                Navigator.of(context).pushNamed('/alerts'),
+                          ),
+                    ],
+                  );
+                  if (constraints.maxWidth < 750) {
+                    return Column(
+                      children: [lines, const SizedBox(height: 16), alerts],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: lines),
+                      const SizedBox(width: 20),
+                      Expanded(child: alerts),
+                    ],
+                  );
+                },
               ),
-              const SizedBox(height: 14),
-              if (store.isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(48),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (store.visibleLines.isEmpty)
-                const _EmptyState(
-                  title: 'Nessuna linea disponibile',
-                  subtitle: 'Aggiungi una linea dal gestionale per iniziare.',
-                  icon: Icons.directions_bus_outlined,
-                )
-              else
-                _LineGrid(
-                  pairs: _directionPairs(store.visibleLines).take(4).toList(),
-                  store: store,
-                ),
               const SizedBox(height: 24),
               const _LocalDataCaption(),
             ],
@@ -76,6 +122,52 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HomePanel extends StatelessWidget {
+  const _HomePanel({
+    required this.title,
+    required this.icon,
+    required this.action,
+    required this.onAction,
+    required this.children,
+  });
+  final String title, action;
+  final IconData icon;
+  final VoidCallback onAction;
+  final List<Widget> children;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: JivaioColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: JivaioColors.navy),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TText(
+                title,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            TextButton(onPressed: onAction, child: TText(action)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const Divider(),
+          children[i],
+        ],
+      ],
+    ),
+  );
 }
 
 class LinesPage extends StatefulWidget {
@@ -1144,26 +1236,6 @@ class _StopRow extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    required this.action,
-    required this.onTap,
-  });
-  final String title;
-  final String action;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Expanded(
-        child: TText(title, style: Theme.of(context).textTheme.titleLarge),
-      ),
-      TextButton(onPressed: onTap, child: TText(action)),
-    ],
-  );
 }
 
 class _EmptyState extends StatelessWidget {

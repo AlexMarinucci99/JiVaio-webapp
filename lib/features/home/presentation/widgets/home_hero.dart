@@ -1,80 +1,72 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/jivaio_theme.dart';
 import '../../../../i18n/app_language.dart';
 import '../home_hero_content.dart';
-import '../home_hero_style.dart';
 
-/// Banner principale della homepage con un'azione fornita dalla pagina ospite.
-class HomeHero extends StatelessWidget {
+class HomeHero extends StatefulWidget {
   const HomeHero({required this.onOpenLines, super.key});
-
   final VoidCallback onOpenLines;
+  @override
+  State<HomeHero> createState() => _HomeHeroState();
+}
+
+class _HomeHeroState extends State<HomeHero> {
+  final _search = TextEditingController();
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final query = _search.text.trim();
+    if (query.isEmpty) {
+      widget.onOpenLines();
+      return;
+    }
+    Navigator.of(context).pushNamed('/lines', arguments: query);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final backgroundAssetPath = HomeHeroStyle.backgroundAssetPath;
-    return Container(
-      padding: HomeHeroStyle.padding,
-      decoration: BoxDecoration(
-        borderRadius: HomeHeroStyle.borderRadius,
-        gradient: backgroundAssetPath == null ? HomeHeroStyle.gradient : null,
-        image: backgroundAssetPath == null
-            ? null
-            : DecorationImage(
-                image: AssetImage(backgroundAssetPath),
-                fit: HomeHeroStyle.backgroundFit,
-                colorFilter: const ColorFilter.mode(
-                  HomeHeroStyle.backgroundOverlayColor,
-                  BlendMode.srcOver,
+    final compact = MediaQuery.sizeOf(context).width < 650;
+    return Column(
+      key: const Key('home-hero-layout'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          tr(context, HomeHeroContent.title).replaceAll('\n', ' '),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontSize: compact ? 32 : 48, letterSpacing: -1.2),
+        ),
+        const SizedBox(height: 8),
+        TText(
+          HomeHeroContent.description,
+          style: Theme.of(context).textTheme.bodyLarge
+              ?.copyWith(fontSize: compact ? 16 : 19),
+        ),
+        const SizedBox(height: 28),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: TextField(
+            controller: _search,
+            onSubmitted: (_) => _submit(),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: tr(context, 'Cerca linea, fermata o destinazione'),
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: Padding(
+                padding: const EdgeInsets.all(5),
+                child: IconButton.filled(
+                  tooltip: tr(context, 'Cerca linea, fermata o destinazione'),
+                  onPressed: _submit,
+                  icon: const Icon(Icons.arrow_forward, color: Colors.white),
                 ),
               ),
-        border: Border.all(color: HomeHeroStyle.borderColor),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < HomeHeroStyle.breakpoint;
-          final content = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TText(
-                HomeHeroContent.title,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontSize: compact
-                      ? switch (LanguageScope.of(context).code) {
-                          'uk' || 'ru' => 27,
-                          'ar' => 29,
-                          _ => HomeHeroStyle.compactTitleFontSize,
-                        }
-                      : HomeHeroStyle.wideTitleFontSize,
-                ),
-              ),
-              const SizedBox(height: HomeHeroStyle.descriptionSpacing),
-              TText(
-                HomeHeroContent.description,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: HomeHeroStyle.descriptionFontSize,
-                  color: JivaioColors.secondary,
-                ),
-              ),
-              const SizedBox(height: HomeHeroStyle.actionSpacing),
-              FilledButton(
-                onPressed: onOpenLines,
-                child: const TText(HomeHeroContent.buttonLabel),
-              ),
-            ],
-          );
-
-          return Flex(
-            key: const Key('home-hero-layout'),
-            direction: compact ? Axis.vertical : Axis.horizontal,
-            crossAxisAlignment: compact
-                ? CrossAxisAlignment.start
-                : CrossAxisAlignment.center,
-            children: [if (compact) content else Expanded(child: content)],
-          );
-        },
-      ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
