@@ -1,75 +1,31 @@
-# Master-Lines · JiVaio Web
+# JiVaio Web
 
-Nuova app Flutter Web autonoma per consultare le linee del trasporto pubblico dell'Aquila e pubblicare avvisi di servizio. Il progetto è separato dalla app Flutter mobile.
+Web app per consultare linee, fermate e orari del trasporto pubblico dell’Aquila, con un gestionale per aggiornare dati e avvisi di servizio.
 
-## Stack
+**[Apri JiVaio Web](https://alexmarinucci99.github.io/JiVaio-webapp/)**
 
-- Flutter Web per la UI pubblica e il gestionale.
-- Supabase Auth per l'accesso dell'amministratore.
-- PostgreSQL su Supabase per linee, fermate, corse, orari e avvisi.
-- Controllo delle revisioni ogni 20 secondi per aggiornare linee e avvisi nei browser aperti.
-- Consultazione pubblica senza registrazione; le policy RLS consentono la lettura anonima dei soli dati pubblicati.
+## Funzionalità
 
-Gli orari seguono il modello GTFS. Un import da PDF o Excel produrrà una bozza da controllare prima della pubblicazione. La publishable key Supabase è pubblica e può essere inclusa nel client; le chiavi secret e service-role non devono mai essere inserite nel codice o nella repository.
+- Ricerca delle linee, percorsi per direzione e prossime partenze.
+- Avvisi di servizio e linee preferite, salvate nel browser.
+- Gestionale riservato per modificare orari, linee e avvisi e gestire backup JSON.
+- Acquisizione degli avvisi AMA come bozze da verificare prima della pubblicazione.
 
-## Prima versione
+Gli orari disponibili sono un’anteprima storica incompleta e devono essere verificati. Posizione dei mezzi e ritardi automatici richiedono un feed in tempo reale dell’operatore.
 
-- Home con ricerca di linee e avviso in evidenza.
-- Elenco completo delle linee e dettaglio per direzione.
-- Avvisi di servizio con periodo di validità e linee coinvolte.
-- Gestionale protetto per modificare orari e pubblicare avvisi.
+## Tecnologie
 
-## Funzioni disponibili
-
-- Le pagine Home, Linee, Dettaglio, Avvisi e Gestionale sono realizzate in Flutter Web.
-- La schermata Linee legge i dati condivisi da Supabase. I vecchi file GTFS rimangono disponibili solo per la modalità locale esplicita.
-- Le prossime partenze usano l’ora di Roma e il calendario settimanale; si aggiornano ogni minuto e includono le corse notturne dopo mezzanotte riferite al giorno di servizio precedente. I calendari senza un tipo riconosciuto sono indicati come da verificare. Le festività infrasettimanali e le eccezioni scolastiche richiedono dati dedicati e non sono riconosciute automaticamente.
-- Il gestionale permette di modificare ogni partenza come una corsa autonoma, con fermate e orari intermedi specifici; una corsa può iniziare da una fermata diversa dalle altre.
-- Ogni corsa può avere una nota facoltativa, visibile nel dettaglio della linea quando si seleziona quella partenza e inclusa nei backup.
-- Gli orari intermedi possono essere contrassegnati come stimati: nel gestionale usa il selettore «Orario stimato» oppure `~` prima dell'orario; la pagina pubblica mostra la dicitura «stimato».
-- Le linee circolari, come A e B, non richiedono andata e ritorno: il percorso si definisce per ciascuna partenza.
-- I vecchi dati locali restano leggibili: per le linee circolari, le sezioni Andata/Ritorno vengono unite in un solo circuito per calendario. Il percorso generico resta sulla prima partenza; le altre richiedono la verifica delle fermate e degli orari intermedi.
-- I dati iniziali sono una **anteprima storica incompleta**; non rappresentano l'elenco AMA aggiornato.
-- `/admin` è separato dalla navigazione pubblica e richiede un account Supabase presente in `admin_users`; senza configurazione Supabase mostra solo la schermata di configurazione.
-- Le modifiche salvate nel gestionale sono condivise tramite Supabase. I preferiti restano specifici del browser.
-- Il gestionale esporta un backup JSON completo (linee e avvisi) oppure di una singola linea.
-- La sincronizzazione AMA acquisisce gli avvisi Viabilità come bozze da revisionare. Gli aggiornamenti della fonte sono segnalati senza sovrascrivere le modifiche amministrative; la sincronizzazione automatica può essere attivata o sospesa nel gestionale.
-- Ogni linea può essere mostrata o nascosta agli utenti: la scelta è salvata su Supabase e applicata anche tramite le policy di accesso.
-- Da un backup si può importare tutto il contenuto oppure una singola linea, anche se il file contiene più linee. L'importazione unisce i dati: gli ID presenti nella selezione aggiornano i record corrispondenti; gli altri record e i preferiti locali restano.
-- Le migrazioni in `supabase/migrations/` definiscono il database; quelle iniziali sono state applicate via SQL Editor, quindi la cronologia CLI non è inizializzata: non eseguire `supabase db push` prima di sincronizzarla. `supabase/bootstrap_admin.sql` mostra come autorizzare manualmente il proprio utente.
-
-Gli avvisi inseriti a mano si aggiornano subito nel sito. Posizione dei mezzi e ritardi automatici richiedono un feed realtime dell'operatore.
+Flutter Web · Supabase Auth · PostgreSQL · Row Level Security
 
 ## Avvio locale
-
-Per una guida passo passo a VS Code, al reload e alla simulazione smartphone, vedi [Modificare la UI in VS Code](docs/guida-ui-vscode.md).
 
 ```sh
 flutter pub get
 flutter run -d web-server --web-port=8765 --web-hostname=127.0.0.1
 ```
 
-Apri `http://127.0.0.1:8765/` per il sito e `http://127.0.0.1:8765/#/admin` per accedere al gestionale con l'account autorizzato. Le modifiche salvate su Supabase sono condivise tra i browser; i preferiti sono locali. Un controllo leggero delle revisioni viene eseguito ogni 20 secondi. Non vengono usati dati locali come ripiego se il database non è raggiungibile.
-
-URL del progetto e publishable key sono configurati per l'app. In un altro ambiente si possono sostituire con `--dart-define=SUPABASE_URL=...` e `--dart-define=SUPABASE_PUBLISHABLE_KEY=...`. Non inserire mai una secret/service-role key nell'app. Per una demo isolata esclusivamente locale, eseguire in debug con entrambi i valori vuoti e `--dart-define=JIVAIO_LOCAL_ADMIN_PREVIEW=true`; questa demo non sincronizza i dati.
-
-Prima di un nuovo deployment, applicare le migrazioni, creare il proprio utente Auth e autorizzarne l'UUID con `supabase/bootstrap_admin.sql`. Verificare gli orari prima di presentarli come definitivi. Gli avvisi non vengono acquisiti automaticamente da AMA: vengono gestiti dall'amministratore.
-
-## Anteprima pubblica per smartphone
-
-La versione web può essere compilata con `flutter build web --release --base-href /Master-Lines/` e pubblicata su GitHub Pages dal ramo `gh-pages`. Il ramo contiene i file compilati di anteprima e va aggiornato a ogni pubblicazione: il push su `main` non aggiorna automaticamente il sito. La versione già pubblicata potrebbe essere precedente al codice locale: occorre ricompilarla e aggiornare il ramo per utilizzare Supabase. Prima della pubblicazione definitiva completare la privacy e verificare gli orari.
+Apri `http://127.0.0.1:8765/`; il gestionale è disponibile su `/#/admin` per gli utenti autorizzati. Per i dettagli sullo sviluppo dell’interfaccia consulta la [guida a VS Code](docs/guida-ui-vscode.md).
 
 ## Sicurezza e privacy
 
-- [Segnalazioni di sicurezza](SECURITY.md): istruzioni per comunicare vulnerabilità in privato.
-- [Privacy](PRIVACY.md): bozza da completare con titolare, recapiti e dettagli dei fornitori prima della pubblicazione.
-
-## Concept grafici
-
-Le immagini di riferimento sono in [`design/concepts/`](design/concepts/). La lista linee riprende la schermata Android condivisa e la adatta a desktop e mobile.
-
-## Sincronizzazione avvisi AMA
-
-La funzione `ama-sync` legge le pubblicazioni della categoria Viabilità tramite le API pubbliche AMA. I nuovi avvisi sono bozze e non vengono pubblicati automaticamente; il gestionale permette di eseguire un controllo manuale, consultare le variazioni e attivare il controllo periodico. La data di pubblicazione della fonte non costituisce una data di scadenza. Le variazioni non sostituiscono i contenuti modificati dall'amministratore.
-
-La migrazione dedicata definisce metadati privati e funzioni di accesso; lo script operativo `supabase/operations/ama_sync_schedule.sql` imposta un controllo ogni 15 minuti dopo la configurazione dei segreti nel Vault. **Non inserire credenziali nel repository o nel client.** Il job usa una chiave service-role: come indicato dalla documentazione Supabase, `pg_net` mantiene temporaneamente l'header decifrato nella coda delle richieste, accessibile ai ruoli con accesso al database. Limitare l'accesso al database e trattare la chiave come privilegiata. La sincronizzazione iniziale può creare fino a 100 bozze; un'interruzione che supera 100 pubblicazioni modificate richiede un recupero manuale.
+Consulta [SECURITY.md](SECURITY.md) per le segnalazioni di sicurezza e [PRIVACY.md](PRIVACY.md) per la bozza dell’informativa. Le chiavi segrete e service-role non devono essere inserite nel client o nel repository.
