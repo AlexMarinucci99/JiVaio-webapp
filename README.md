@@ -26,6 +26,10 @@ flutter run -d web-server --web-port=8765 --web-hostname=127.0.0.1
 
 Apri `http://127.0.0.1:8765/`; il gestionale è disponibile su `/#/admin` per gli utenti autorizzati. Per i dettagli sullo sviluppo dell’interfaccia consulta la [guida a VS Code](docs/guida-ui-vscode.md).
 
+## Pubblicazione
+
+Per GitHub Pages, compila con `flutter build web --release --base-href /JiVaio-webapp/` e pubblica il contenuto di `build/web` sul ramo `gh-pages`.
+
 ## Sicurezza e privacy
 
 Consulta [SECURITY.md](SECURITY.md) per le segnalazioni di sicurezza e [PRIVACY.md](PRIVACY.md) per la bozza dell’informativa. Le chiavi segrete e service-role non devono essere inserite nel client o nel repository.

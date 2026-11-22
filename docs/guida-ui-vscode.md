@@ -71,4 +71,4 @@ La palette principale usa superfici chiare, blu scuro per i testi e blu per azio
 
 Nel browser Chrome sul computer apri gli strumenti sviluppatore con **Ctrl+Shift+I**, poi attiva o disattiva la barra dei dispositivi con **Ctrl+Shift+M** e scegli una dimensione per telefono. Questa è una simulazione: controlla anche la pagina su un telefono reale quando disponibile.
 
-L'indirizzo `127.0.0.1` sul telefono indica il telefono stesso, non il computer. Per una prova esterna puoi aprire l'anteprima [GitHub Pages](https://alexmarinucci99.github.io/Master-Lines/), verificando prima che la versione pubblicata sia stata aggiornata con il nuovo collegamento a Supabase.
+L'indirizzo `127.0.0.1` sul telefono indica il telefono stesso, non il computer. Per una prova esterna puoi aprire l'anteprima [GitHub Pages](https://alexmarinucci99.github.io/JiVaio-webapp/), verificando prima che la versione pubblicata sia stata aggiornata con il nuovo collegamento a Supabase.
