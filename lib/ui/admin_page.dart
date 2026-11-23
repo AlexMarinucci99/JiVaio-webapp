@@ -24,8 +24,11 @@ class AdminPage extends StatefulWidget {
   State<AdminPage> createState() => _AdminPageState();
 }
 
+enum _LineVisibilityFilter { all, visible, working }
+
 class _AdminPageState extends State<AdminPage> {
   int _tab = 0;
+  _LineVisibilityFilter _lineFilter = _LineVisibilityFilter.all;
   bool _syncingAma = false;
   int _amaStatusVersion = 0;
 
@@ -152,8 +155,19 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   List<Widget> _linesPanel(BuildContext context) {
-    final lines = [...widget.store.lines]
-      ..sort((a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()));
+    final lines =
+        widget.store.lines
+            .where(
+              (line) => switch (_lineFilter) {
+                _LineVisibilityFilter.all => true,
+                _LineVisibilityFilter.visible => line.isVisible,
+                _LineVisibilityFilter.working => !line.isVisible,
+              },
+            )
+            .toList()
+          ..sort(
+            (a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()),
+          );
     return [
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -175,14 +189,37 @@ class _AdminPageState extends State<AdminPage> {
           ),
         ),
       ),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+        sliver: SliverToBoxAdapter(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (filter, label) in [
+                (_LineVisibilityFilter.all, 'Tutte'),
+                (_LineVisibilityFilter.visible, 'Visibili al pubblico'),
+                (_LineVisibilityFilter.working, 'Working'),
+              ])
+                ChoiceChip(
+                  label: TText(label),
+                  selected: _lineFilter == filter,
+                  onSelected: (_) => setState(() => _lineFilter = filter),
+                ),
+            ],
+          ),
+        ),
+      ),
       const SliverToBoxAdapter(child: SizedBox(height: 12)),
       if (lines.isEmpty)
-        const SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           sliver: SliverToBoxAdapter(
             child: _AdminEmpty(
               title: 'Non ci sono linee',
-              text: 'Aggiungi la prima linea o importa il GTFS aggiornato.',
+              text: _lineFilter == _LineVisibilityFilter.all
+                  ? 'Aggiungi la prima linea o importa il GTFS aggiornato.'
+                  : 'Nessuna linea in questa sezione.',
             ),
           ),
         )
