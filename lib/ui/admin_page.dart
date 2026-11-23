@@ -1357,6 +1357,10 @@ class _LineEditorState extends State<_LineEditor> {
                       fields: _directions[i],
                       label: _directionDisplayLabel(i),
                       isCircular: _isCircular,
+                      onToggleTrips: () => setState(
+                        () => _directions[i].tripsCollapsed =
+                            !_directions[i].tripsCollapsed,
+                      ),
                       onAddTrip: () => _addTrip(_directions[i]),
                       onEditTripStops: (tripIndex) =>
                           _editTripStops(_directions[i], tripIndex),
@@ -1586,6 +1590,7 @@ class _DirectionFields {
   final String id;
   String directionName;
   String serviceId;
+  bool tripsCollapsed = false;
   final String? dataWarning;
   final TextEditingController origin;
   final TextEditingController destination;
@@ -1692,6 +1697,7 @@ class _DirectionForm extends StatelessWidget {
     required this.fields,
     required this.label,
     required this.isCircular,
+    required this.onToggleTrips,
     required this.onAddTrip,
     required this.onEditTripStops,
     required this.onRemoveTrip,
@@ -1701,6 +1707,7 @@ class _DirectionForm extends StatelessWidget {
   final _DirectionFields fields;
   final String label;
   final bool isCircular;
+  final VoidCallback onToggleTrips;
   final VoidCallback onAddTrip;
   final ValueChanged<int> onEditTripStops;
   final ValueChanged<int> onRemoveTrip;
@@ -1723,6 +1730,16 @@ class _DirectionForm extends StatelessWidget {
               child: TText(
                 label,
                 style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            IconButton(
+              tooltip: tr(
+                context,
+                fields.tripsCollapsed ? 'Mostra corse' : 'Nascondi corse',
+              ),
+              onPressed: onToggleTrips,
+              icon: Icon(
+                fields.tripsCollapsed ? Icons.expand_more : Icons.expand_less,
               ),
             ),
             if (onRemoveDirection != null)
@@ -1757,34 +1774,42 @@ class _DirectionForm extends StatelessWidget {
             if (value != null) onServiceChanged(value);
           },
         ),
-        const SizedBox(height: 16),
-        TText(
-          isCircular
-              ? 'Ogni partenza del circuito può iniziare da una fermata diversa.'
-              : 'Ogni partenza può avere un percorso e orari intermedi diversi.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 10),
-        if (fields.trips.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: TText('Nessuna corsa inserita per questo calendario.'),
-          )
-        else
-          for (var i = 0; i < fields.trips.length; i++)
-            _TripAdminRow(
-              key: ValueKey('${fields.id}-${fields.trips[i].id}-$i'),
-              trip: fields.trips[i],
-              onEditStops: () => onEditTripStops(i),
-              onRemove: () => onRemoveTrip(i),
-            ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            onPressed: onAddTrip,
-            icon: const Icon(Icons.add),
-            label: const TText('Aggiungi partenza'),
+        Offstage(
+          offstage: fields.tripsCollapsed,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              TText(
+                isCircular
+                    ? 'Ogni partenza del circuito può iniziare da una fermata diversa.'
+                    : 'Ogni partenza può avere un percorso e orari intermedi diversi.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 10),
+              if (fields.trips.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: TText('Nessuna corsa inserita per questo calendario.'),
+                )
+              else
+                for (var i = 0; i < fields.trips.length; i++)
+                  _TripAdminRow(
+                    key: ValueKey('${fields.id}-${fields.trips[i].id}-$i'),
+                    trip: fields.trips[i],
+                    onEditStops: () => onEditTripStops(i),
+                    onRemove: () => onRemoveTrip(i),
+                  ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: onAddTrip,
+                  icon: const Icon(Icons.add),
+                  label: const TText('Aggiungi partenza'),
+                ),
+              ),
+            ],
           ),
         ),
       ],
