@@ -245,5 +245,7 @@
   "info": "інформація",
   "Parte da {value}": "Відправлення з {value}",
   "Navetta Notturna": "Нічний шатл",
-  "Linea circolare / ad anello": "Кільцевий маршрут"
+  "Linea circolare / ad anello": "Кільцевий маршрут",
+  "Mostra corse": "Показати рейси",
+  "Nascondi corse": "Приховати рейси"
 }

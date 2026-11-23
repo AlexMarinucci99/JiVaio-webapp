@@ -245,5 +245,7 @@
   "info": "information",
   "Parte da {value}": "Departs from {value}",
   "Navetta Notturna": "Night shuttle",
-  "Linea circolare / ad anello": "Circular / loop route"
+  "Linea circolare / ad anello": "Circular / loop route",
+  "Mostra corse": "Show trips",
+  "Nascondi corse": "Hide trips"
 }
