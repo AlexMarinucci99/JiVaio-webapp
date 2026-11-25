@@ -7,6 +7,7 @@ import 'data/jivaio_store.dart';
 import 'data/supabase_config.dart';
 import 'theme/jivaio_theme.dart';
 import 'ui/admin_access_page.dart';
+import 'ui/desktop_scroll_behavior.dart';
 import 'ui/public_pages.dart';
 
 Future<void> main() async {
@@ -27,6 +28,7 @@ class JivaioRoot extends StatefulWidget {
 
 class _JivaioRootState extends State<JivaioRoot> {
   late final JivaioStore _store;
+  final SectionRouteObserver _sectionRoutes = SectionRouteObserver();
 
   @override
   void initState() {
@@ -105,6 +107,8 @@ class _JivaioRootState extends State<JivaioRoot> {
           title: tr(context, 'JiVaio · Linee e orari'),
           debugShowCheckedModeBanner: false,
           theme: buildJivaioTheme(),
+          scrollBehavior: SectionScrollBehavior(_sectionRoutes),
+          navigatorObservers: [_sectionRoutes],
           onGenerateRoute: _route,
           initialRoute: '/',
         ),
