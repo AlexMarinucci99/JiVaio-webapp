@@ -7,13 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 const languageNames = <String, String>{
   'it': 'Italiano',
   'en': 'English',
+  'de': 'Deutsch',
   'ar': 'العربية',
   'uk': 'Українська',
   'ru': 'Русский',
 };
 
 class AppLanguage extends ChangeNotifier {
-  AppLanguage._(this.code, this._translations);
+  AppLanguage._(this.code, this._translations, this._notices);
+  final Map<String, Map<String, String>> _notices;
   String code;
   final Map<String, Map<String, String>> _translations;
   static const _preferenceKey = 'jivaio_language';
@@ -32,7 +34,11 @@ class AppLanguage extends ChangeNotifier {
     } catch (_) {
       // The interface still works if browser storage is unavailable.
     }
-    return AppLanguage._(code, maps);
+    final rawNotices = await rootBundle.loadString('assets/i18n/notices.json');
+    final notices = (jsonDecode(rawNotices) as Map<String, dynamic>).map(
+      (key, value) => MapEntry(key, Map<String, String>.from(value as Map)),
+    );
+    return AppLanguage._(code, maps, notices);
   }
 
   // Compile dynamic label patterns once; route lists may contain many items.
@@ -79,8 +85,15 @@ class AppLanguage extends ChangeNotifier {
     (r'^Calendario (.+)$', 'Calendario {value}'),
     (r'^Circuito ([^·]+)$', 'Circuito {value}'),
     (r'^Inizio: (.+)$', 'Inizio: {value}'),
+    (r'^Ultima sincronizzazione: (.+)$', 'Ultima sincronizzazione: {value}'),
     (r'^Fine: (.+)$', 'Fine: {value}'),
   ].map((entry) => (RegExp(entry.$1), entry.$2)).toList(growable: false);
+
+  // Never apply UI patterns or translate fragments of an operator's notice.
+  String notice(String source, Map<String, Map<String, String>> translations) =>
+      code == 'it'
+      ? source
+      : translations[code]?[source] ?? _notices[code]?[source] ?? source;
 
   String translate(String value) {
     final dictionary = _translations[code];
