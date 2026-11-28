@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(rootBundle.clear);
   testWidgets('language choice persists and translates dynamic labels', (
     tester,
   ) async {
