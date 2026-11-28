@@ -199,7 +199,7 @@ class _AdminPageState extends State<AdminPage> {
               for (final (filter, label) in [
                 (_LineVisibilityFilter.all, 'Tutte'),
                 (_LineVisibilityFilter.visible, 'Visibili al pubblico'),
-                (_LineVisibilityFilter.working, 'Working'),
+                (_LineVisibilityFilter.working, 'In lavorazione'),
               ])
                 ChoiceChip(
                   label: TText(label),
@@ -353,7 +353,7 @@ class _AdminPageState extends State<AdminPage> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TText(
+                          Text(
                             payload['title'] as String? ?? '',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
@@ -1020,7 +1020,7 @@ class _LineAdminRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TText(line.name, style: Theme.of(context).textTheme.titleMedium),
+              Text(LanguageScope.of(context).routeName(line.name, line.id), style: Theme.of(context).textTheme.titleMedium),
               TText(
                 '${tr(context, '${line.directions.length} gruppi ${line.isCircular ? 'circuito' : 'direzione'}/orario')} · ${tr(context, '${line.stopCount} fermate')}${line.isManual ? ' · ${tr(context, 'inserita a mano')}' : ''}',
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -1102,12 +1102,17 @@ class _AlertAdminRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TText(
-                alert.title,
+              Text(
+                LanguageScope.of(context).notice(alert.title, alert.translations),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              TText(
-                '${alert.isPublished ? 'Pubblicato' : 'Bozza'} · ${alert.sourceName?.isNotEmpty == true ? alert.sourceName! : 'Manuale'} · ${alert.severity} · ${alert.affectedLines.isEmpty ? 'tutte le linee' : alert.affectedLines.join(', ')}',
+              Text(
+                [
+                  tr(context, alert.isPublished ? 'Pubblicato' : 'Bozza'),
+                  if (alert.sourceName?.isNotEmpty == true) alert.sourceName! else tr(context, 'Manuale'),
+                  tr(context, alert.severity),
+                  alert.affectedLines.isEmpty ? tr(context, 'tutte le linee') : alert.affectedLines.join(', '),
+                ].join(' · '),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -2345,6 +2350,8 @@ class _AlertEditorState extends State<_AlertEditor> {
   late final TextEditingController _lines;
   late final TextEditingController _source;
   late final TextEditingController _sourceUrl;
+  final _translated = <String, List<TextEditingController>>{};
+  List<TextEditingController> get _originals => [_title, _summary, _details];
   late DateTime _startsAt;
   DateTime? _endsAt;
   late String _severity;
@@ -2359,6 +2366,12 @@ class _AlertEditorState extends State<_AlertEditor> {
     _title = TextEditingController(text: alert?.title ?? '');
     _summary = TextEditingController(text: alert?.summary ?? '');
     _details = TextEditingController(text: alert?.details ?? '');
+    for (final code in languageNames.keys.where((code) => code != 'it')) {
+      _translated[code] = [
+        for (final field in _originals)
+          TextEditingController(text: alert?.translations[code]?[field.text]),
+      ];
+    }
     _lines = TextEditingController(text: alert?.affectedLines.join(', ') ?? '');
     _source = TextEditingController(text: alert?.sourceName ?? '');
     _sourceUrl = TextEditingController(text: alert?.sourceUrl ?? '');
@@ -2370,6 +2383,11 @@ class _AlertEditorState extends State<_AlertEditor> {
 
   @override
   void dispose() {
+    for (final fields in _translated.values) {
+      for (final field in fields) {
+        field.dispose();
+      }
+    }
     _title.dispose();
     _summary.dispose();
     _details.dispose();
@@ -2412,6 +2430,7 @@ class _AlertEditorState extends State<_AlertEditor> {
                 children: [
                   TextFormField(
                     controller: _title,
+                    onChanged: (_) => _clearTranslations(0),
                     decoration: InputDecoration(
                       labelText: tr(context, 'Titolo'),
                     ),
@@ -2423,6 +2442,7 @@ class _AlertEditorState extends State<_AlertEditor> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _summary,
+                    onChanged: (_) => _clearTranslations(1),
                     minLines: 2,
                     maxLines: 3,
                     decoration: InputDecoration(
@@ -2436,6 +2456,7 @@ class _AlertEditorState extends State<_AlertEditor> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _details,
+                    onChanged: (_) => _clearTranslations(2),
                     minLines: 3,
                     maxLines: 6,
                     decoration: InputDecoration(
@@ -2443,6 +2464,25 @@ class _AlertEditorState extends State<_AlertEditor> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  ExpansionTile(
+                    title: const TText('Traduzioni'),
+                    children: [
+                      for (final entry in _translated.entries)
+                        ExpansionTile(
+                          title: Text(languageNames[entry.key]!),
+                          children: [
+                            for (var i = 0; i < entry.value.length; i++)
+                              TextFormField(
+                                controller: entry.value[i],
+                                maxLines: i == 0 ? 1 : null,
+                                decoration: InputDecoration(
+                                  labelText: tr(context, ['Titolo', 'Riepilogo', 'Dettagli'][i]),
+                                ),
+                              ),
+                          ],
+                        ),
+                    ],
+                  ),
                   DropdownButtonFormField<String>(
                     initialValue: _severity,
                     decoration: InputDecoration(
@@ -2569,11 +2609,26 @@ class _AlertEditorState extends State<_AlertEditor> {
     });
   }
 
+  void _clearTranslations(int index) {
+    for (final fields in _translated.values) {
+      fields[index].clear();
+    }
+  }
+
   Future<void> _save() async {
     if (_isSaving || !_formKey.currentState!.validate()) return;
     final now = DateTime.now();
     final alert = ServiceAlert(
       id: widget.alert?.id ?? 'manual-alert-${now.microsecondsSinceEpoch}',
+      translations: {
+        for (final entry in _translated.entries)
+          if (entry.value.any((field) => field.text.trim().isNotEmpty))
+            entry.key: {
+              for (var i = 0; i < entry.value.length; i++)
+                if (_originals[i].text.trim().isNotEmpty && entry.value[i].text.trim().isNotEmpty)
+                  _originals[i].text.trim(): entry.value[i].text.trim(),
+            },
+      },
       title: _title.text.trim(),
       summary: _summary.text.trim(),
       details: _details.text.trim(),

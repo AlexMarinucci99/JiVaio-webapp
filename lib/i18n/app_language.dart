@@ -7,13 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 const languageNames = <String, String>{
   'it': 'Italiano',
   'en': 'English',
+  'de': 'Deutsch',
   'ar': 'العربية',
   'uk': 'Українська',
   'ru': 'Русский',
 };
 
 class AppLanguage extends ChangeNotifier {
-  AppLanguage._(this.code, this._translations);
+  AppLanguage._(this.code, this._translations, this._notices);
+  final Map<String, Map<String, String>> _notices;
   String code;
   final Map<String, Map<String, String>> _translations;
   static const _preferenceKey = 'jivaio_language';
@@ -32,7 +34,11 @@ class AppLanguage extends ChangeNotifier {
     } catch (_) {
       // The interface still works if browser storage is unavailable.
     }
-    return AppLanguage._(code, maps);
+    final rawNotices = await rootBundle.loadString('assets/i18n/notices.json');
+    final notices = (jsonDecode(rawNotices) as Map<String, dynamic>).map(
+      (key, value) => MapEntry(key, Map<String, String>.from(value as Map)),
+    );
+    return AppLanguage._(code, maps, notices);
   }
 
   // Compile dynamic label patterns once; route lists may contain many items.
@@ -68,6 +74,14 @@ class AppLanguage extends ChangeNotifier {
     (r'^(\d+) fermate$', '{n} fermate'),
     (r'^(\d+) linee$', '{n} linee'),
     (r'^(\d+) avvisi$', '{n} avvisi'),
+    (
+      r'^Linea da verificare \(GTFS route_id (.+)\)$',
+      'Linea da verificare (GTFS route_id {value})',
+    ),
+    (
+      r'^Questo calendario include (\d+) varianti di percorso; ogni corsa conserva il proprio elenco di fermate\.$',
+      'Questo calendario include {n} varianti di percorso; ogni corsa conserva il proprio elenco di fermate.',
+    ),
     (r'^Linea (.+)$', 'Linea {value}'),
     (r'^Orari di partenza · (.+)$', 'Orari di partenza · {value}'),
     (r'^Corsa delle (.+)$', 'Corsa delle {value}'),
@@ -79,8 +93,24 @@ class AppLanguage extends ChangeNotifier {
     (r'^Calendario (.+)$', 'Calendario {value}'),
     (r'^Circuito ([^·]+)$', 'Circuito {value}'),
     (r'^Inizio: (.+)$', 'Inizio: {value}'),
+    (r'^Ultima sincronizzazione: (.+)$', 'Ultima sincronizzazione: {value}'),
     (r'^Fine: (.+)$', 'Fine: {value}'),
   ].map((entry) => (RegExp(entry.$1), entry.$2)).toList(growable: false);
+
+  // Never apply UI patterns or translate fragments of an operator's notice.
+  String notice(String source, Map<String, Map<String, String>> translations) =>
+      code == 'it'
+      ? source
+      : translations[code]?[source] ?? _notices[code]?[source] ?? source;
+
+  static final _missingMetadata = RegExp(
+    r'^Nel GTFS mancano i metadati di route_id (.+?)\. (\d+) corse lo usano(?:; i trip_headsign suggeriscono la linea (.+?), da confermare)?\.$',
+  );
+
+  String routeName(String name, String id) =>
+      name == 'Linea $id' || name == 'Linea da verificare (GTFS route_id $id)'
+      ? translate(name)
+      : name;
 
   String translate(String value) {
     final dictionary = _translations[code];
@@ -88,6 +118,18 @@ class AppLanguage extends ChangeNotifier {
     final exact = dictionary[value];
     if (exact != null) return exact;
 
+    final metadata = _missingMetadata.firstMatch(value);
+    if (metadata != null) {
+      final warning =
+          dictionary['Nel GTFS mancano i metadati di route_id {id}. {n} corse lo usano.']!
+              .replaceAll('{id}', metadata[1]!)
+              .replaceAll('{n}', metadata[2]!);
+      final line = metadata[3];
+      if (line == null) return warning;
+      final hint =
+          dictionary['I trip_headsign suggeriscono la linea {value}, da confermare.']!;
+      return '$warning ${hint.replaceAll('{value}', line)}';
+    }
     for (final (pattern, template) in _patterns) {
       final match = pattern.firstMatch(value);
       final translated = dictionary[template];
@@ -98,9 +140,12 @@ class AppLanguage extends ChangeNotifier {
             .replaceAll('{n}', match[2]!);
       }
       final content = match[1]!;
-      return translated
-          .replaceAll('{n}', content)
-          .replaceAll('{value}', dictionary[content] ?? content);
+      final localizeContent =
+          template == 'Calendario {value}' ||
+          template == 'Orari di partenza · {value}' ||
+          template == 'Corsa delle {value}';
+      final label = localizeContent ? translate(content) : content;
+      return translated.replaceAll('{n}', content).replaceAll('{value}', label);
     }
     // Combined labels can include a schedule name and place names. Translate
     // known fragments only, leaving names and user-authored content intact.

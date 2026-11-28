@@ -381,6 +381,7 @@ class ServiceAlert {
     required this.details,
     required this.severity,
     required this.startsAt,
+    this.translations = const {},
     this.endsAt,
     this.sourceName,
     this.sourceUrl,
@@ -392,6 +393,8 @@ class ServiceAlert {
   final String title;
   final String summary;
   final String details;
+  // Locale -> exact Italian source text -> editor-supplied translation.
+  final Map<String, Map<String, String>> translations;
   final String severity;
   final DateTime startsAt;
   final DateTime? endsAt;
@@ -408,6 +411,7 @@ class ServiceAlert {
     'title': title,
     'summary': summary,
     'details': details,
+    if (translations.isNotEmpty) 'translations': translations,
     'severity': severity,
     'startsAt': startsAt.toIso8601String(),
     'endsAt': endsAt?.toIso8601String(),
@@ -422,6 +426,7 @@ class ServiceAlert {
     title: json['title'] as String? ?? '',
     summary: json['summary'] as String? ?? '',
     details: json['details'] as String? ?? '',
+    translations: _readTranslations(json['translations']),
     severity: json['severity'] as String? ?? 'info',
     startsAt:
         DateTime.tryParse(json['startsAt'] as String? ?? '') ?? DateTime.now(),
@@ -433,4 +438,19 @@ class ServiceAlert {
         .toList(),
     isPublished: json['isPublished'] as bool? ?? false,
   );
+
+  static Map<String, Map<String, String>> _readTranslations(Object? raw) {
+    if (raw is! Map) return {};
+    return {
+      for (final entry in raw.entries)
+        if (entry.key is String && entry.value is Map)
+          entry.key as String: {
+            for (final field in (entry.value as Map).entries)
+              if (field.key is String &&
+                  field.value is String &&
+                  (field.value as String).trim().isNotEmpty)
+                field.key as String: field.value as String,
+          },
+    };
+  }
 }

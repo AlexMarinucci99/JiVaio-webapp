@@ -53,8 +53,8 @@ class HomePage extends StatelessWidget {
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: _LineBadge(code: pair.line.code, size: 48),
-                            title: TText(
-                              pair.line.name,
+                            title: Text(
+                              LanguageScope.of(context).routeName(pair.line.name, pair.line.id),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -83,13 +83,13 @@ class HomePage extends StatelessWidget {
                               Icons.info_outline,
                               color: JivaioColors.blue,
                             ),
-                            title: TText(
-                              alert.title,
+                            title: Text(
+                              LanguageScope.of(context).notice(alert.title, alert.translations),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            subtitle: TText(
-                              alert.summary,
+                            subtitle: Text(
+                              LanguageScope.of(context).notice(alert.summary, alert.translations),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -421,7 +421,7 @@ class _LineBadge extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 3),
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: TText(
+              child: Text(
                 code,
                 maxLines: 1,
                 style: const TextStyle(
@@ -463,8 +463,8 @@ class _LineCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TText(
-                        line.name,
+                      Text(
+                        LanguageScope.of(context).routeName(line.name, line.id),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium,
@@ -644,8 +644,8 @@ class _LineDetailPageState extends State<LineDetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TText(
-                              line.name,
+                            Text(
+                              LanguageScope.of(context).routeName(line.name, line.id),
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             TText(
@@ -1033,23 +1033,23 @@ class AlertCard extends StatelessWidget {
                     runSpacing: 6,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      TText(
-                        alert.title,
+                      Text(
+                        LanguageScope.of(context).notice(alert.title, alert.translations),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       _SmallPill(icon: Icons.circle, label: label, tint: color),
                     ],
                   ),
                   const SizedBox(height: 7),
-                  TText(
-                    alert.summary,
+                  Text(
+                    LanguageScope.of(context).notice(alert.summary, alert.translations),
                     style: Theme.of(context).textTheme.bodyLarge
                         ?.copyWith(fontSize: 15),
                   ),
                   if (!compact) ...[
                     const SizedBox(height: 11),
-                    TText(
-                      alert.details,
+                    Text(
+                      LanguageScope.of(context).notice(alert.details, alert.translations),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -1074,7 +1074,7 @@ class AlertCard extends StatelessWidget {
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                         if (alert.sourceName != null)
-                          TText(
+                          Text(
                             alert.sourceName!,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
@@ -1212,7 +1212,7 @@ class _StopRow extends StatelessWidget {
           ),
           const SizedBox(width: 9),
           Expanded(
-            child: TText(
+            child: Text(
               stop.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
