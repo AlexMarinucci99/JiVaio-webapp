@@ -268,5 +268,11 @@
   "Email": "البريد الإلكتروني",
   "Password": "كلمة المرور",
   "Traduzioni": "الترجمات",
-  "Circolare": "دائري"
+  "Circolare": "دائري",
+  "In lavorazione": "قيد الإعداد",
+  "1 linea": "خط واحد",
+  "Linea da verificare (GTFS route_id {value})": "خط يتطلب التحقق (GTFS route_id {value})",
+  "Questo calendario include {n} varianti di percorso; ogni corsa conserva il proprio elenco di fermate.": "يتضمن جدول التشغيل هذا {n} مسارات بديلة. لكل رحلة قائمة محطاتها الخاصة.",
+  "Nel GTFS mancano i metadati di route_id {id}. {n} corse lo usano.": "بيانات GTFS الوصفية مفقودة للمعرّف route_id {id} الذي تستخدمه {n} رحلات.",
+  "I trip_headsign suggeriscono la linea {value}, da confermare.": "تشير قيم trip_headsign إلى الخط {value}، وهذا يتطلب تأكيدًا."
 }

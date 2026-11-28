@@ -268,5 +268,11 @@
   "Email": "Email",
   "Password": "Password",
   "Traduzioni": "Translations",
-  "Circolare": "Circular"
+  "Circolare": "Circular",
+  "In lavorazione": "In progress",
+  "1 linea": "1 route",
+  "Linea da verificare (GTFS route_id {value})": "Route to verify (GTFS route_id {value})",
+  "Questo calendario include {n} varianti di percorso; ogni corsa conserva il proprio elenco di fermate.": "This service calendar includes {n} route variants. Each trip retains its own stops.",
+  "Nel GTFS mancano i metadati di route_id {id}. {n} corse lo usano.": "GTFS metadata is missing for route_id {id}, used by {n} trips.",
+  "I trip_headsign suggeriscono la linea {value}, da confermare.": "The trip_headsign values suggest route {value}. Confirmation is needed."
 }

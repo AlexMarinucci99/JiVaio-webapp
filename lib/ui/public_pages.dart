@@ -54,7 +54,7 @@ class HomePage extends StatelessWidget {
                             contentPadding: EdgeInsets.zero,
                             leading: _LineBadge(code: pair.line.code, size: 48),
                             title: Text(
-                              pair.line.name,
+                              LanguageScope.of(context).routeName(pair.line.name, pair.line.id),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -464,7 +464,7 @@ class _LineCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        line.name,
+                        LanguageScope.of(context).routeName(line.name, line.id),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium,
@@ -645,7 +645,7 @@ class _LineDetailPageState extends State<LineDetailPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              line.name,
+                              LanguageScope.of(context).routeName(line.name, line.id),
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             TText(

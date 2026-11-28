@@ -199,7 +199,7 @@ class _AdminPageState extends State<AdminPage> {
               for (final (filter, label) in [
                 (_LineVisibilityFilter.all, 'Tutte'),
                 (_LineVisibilityFilter.visible, 'Visibili al pubblico'),
-                (_LineVisibilityFilter.working, 'Working'),
+                (_LineVisibilityFilter.working, 'In lavorazione'),
               ])
                 ChoiceChip(
                   label: TText(label),
@@ -1020,7 +1020,7 @@ class _LineAdminRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(line.name, style: Theme.of(context).textTheme.titleMedium),
+              Text(LanguageScope.of(context).routeName(line.name, line.id), style: Theme.of(context).textTheme.titleMedium),
               TText(
                 '${tr(context, '${line.directions.length} gruppi ${line.isCircular ? 'circuito' : 'direzione'}/orario')} · ${tr(context, '${line.stopCount} fermate')}${line.isManual ? ' · ${tr(context, 'inserita a mano')}' : ''}',
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -1106,8 +1106,13 @@ class _AlertAdminRow extends StatelessWidget {
                 LanguageScope.of(context).notice(alert.title, alert.translations),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              TText(
-                '${alert.isPublished ? 'Pubblicato' : 'Bozza'} · ${alert.sourceName?.isNotEmpty == true ? alert.sourceName! : 'Manuale'} · ${alert.severity} · ${alert.affectedLines.isEmpty ? 'tutte le linee' : alert.affectedLines.join(', ')}',
+              Text(
+                [
+                  tr(context, alert.isPublished ? 'Pubblicato' : 'Bozza'),
+                  if (alert.sourceName?.isNotEmpty == true) alert.sourceName! else tr(context, 'Manuale'),
+                  tr(context, alert.severity),
+                  alert.affectedLines.isEmpty ? tr(context, 'tutte le linee') : alert.affectedLines.join(', '),
+                ].join(' · '),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],

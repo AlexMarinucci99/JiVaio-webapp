@@ -268,5 +268,11 @@
   "Email": "E-Mail",
   "Password": "Passwort",
   "Traduzioni": "Übersetzungen",
-  "Circolare": "Ringlinie"
+  "Circolare": "Ringlinie",
+  "In lavorazione": "In Bearbeitung",
+  "1 linea": "1 Linie",
+  "Linea da verificare (GTFS route_id {value})": "Linie prüfen (GTFS route_id {value})",
+  "Questo calendario include {n} varianti di percorso; ogni corsa conserva il proprio elenco di fermate.": "Dieser Verkehrskalender enthält {n} Linienwegvarianten. Jede Fahrt hat ihre eigene Haltestellenliste.",
+  "Nel GTFS mancano i metadati di route_id {id}. {n} corse lo usano.": "Für route_id {id} fehlen GTFS-Metadaten. {n} Fahrten verwenden diese ID.",
+  "I trip_headsign suggeriscono la linea {value}, da confermare.": "Die trip_headsign-Werte deuten auf Linie {value} hin. Eine Bestätigung steht aus."
 }

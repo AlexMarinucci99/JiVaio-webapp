@@ -268,5 +268,11 @@
   "Email": "Електронна пошта",
   "Password": "Пароль",
   "Traduzioni": "Переклади",
-  "Circolare": "Кільцевий"
+  "Circolare": "Кільцевий",
+  "In lavorazione": "В роботі",
+  "1 linea": "1 маршрут",
+  "Linea da verificare (GTFS route_id {value})": "Маршрут потребує перевірки (GTFS route_id {value})",
+  "Questo calendario include {n} varianti di percorso; ogni corsa conserva il proprio elenco di fermate.": "Цей календар містить варіанти маршруту ({n}). Кожен рейс має власний перелік зупинок.",
+  "Nel GTFS mancano i metadati di route_id {id}. {n} corse lo usano.": "Відсутні метадані GTFS для route_id {id}. Кількість рейсів із цим ID: {n}.",
+  "I trip_headsign suggeriscono la linea {value}, da confermare.": "Значення trip_headsign вказують на маршрут {value}. Потрібне підтвердження."
 }
